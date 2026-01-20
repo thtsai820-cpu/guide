@@ -3,16 +3,21 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>guide - 50音測驗</title>
+<title>guide - Japanese helper</title>
 
 <style>
 :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", Arial; background: #f6f7fb; }
 body { margin: 0; }
 .header { background: white; border-bottom: 1px solid #e5e7eb; padding: 12px 16px; }
 .title { font-weight: 700; font-size: 18px; }
-.main { max-width: 760px; margin: 0 auto; padding: 16px; }
-.card { background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 14px; margin-top: 12px; }
+
+.main { max-width: 900px; margin: 0 auto; padding: 16px; }
+.grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 900px){ .grid { grid-template-columns: 1fr 1fr; } }
+
+.card { background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 14px; }
 .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+
 .group { min-width: 170px; }
 .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
 
@@ -29,277 +34,25 @@ body { margin: 0; }
 .wrong { background: #fef2f2; border-color: #dc2626; }
 
 .actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
-.primary, .ghost, .playBtn { padding: 10px 12px; border-radius: 12px; cursor: pointer; font-weight: 700; border: 1px solid #e5e7eb; background: white; }
+.primary, .ghost, .playBtn, .danger {
+  padding: 10px 12px; border-radius: 12px; cursor: pointer; font-weight: 700;
+  border: 1px solid #e5e7eb; background: white;
+}
 .primary { background: #111827; color: white; border-color: #111827; }
 .playBtn { border-style: dashed; }
+.danger { border-color: #fecaca; background: #fff1f2; }
 
 .hint { margin-top: 10px; font-weight: 700; }
-.small { font-size: 12px; color: #6b7280; font-weight: 500; }
+.small { font-size: 12px; color: #6b7280; font-weight: 500; line-height: 1.4; }
 .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; border: 1px solid #e5e7eb; font-size: 12px; color: #374151; background: #fff; }
-</style>
-</head>
 
-<body>
-<div class="header">
-  <div class="title">guide – 50音測驗 <span class="badge">聽力模式（修正：改唸假名）</span></div>
-</div>
-
-<div class="main">
-  <div class="card">
-    <div class="row">
-      <div class="group">
-        <div class="label">文字系統</div>
-        <div class="seg">
-          <button id="hiraBtn" class="active">平假名</button>
-          <button id="kataBtn">片假名</button>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="label">模式</div>
-        <div class="seg">
-          <button id="k2rBtn" class="active">假名→發音</button>
-          <button id="r2kBtn">發音→假名</button>
-          <button id="l2kBtn">聽力→假名</button>
-        </div>
-        <div class="small">聽力模式：按播放聽「假名」發音（比 romaji 準）</div>
-      </div>
-
-      <div class="group">
-        <div class="label">分數</div>
-        <div id="scoreBox">0 / 0</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div id="prompt" class="prompt">あ</div>
-    <div id="subprompt" class="subprompt"></div>
-
-    <div id="choices" class="choices"></div>
-
-    <div class="actions">
-      <button id="playBtn" class="playBtn">🔊 播放</button>
-      <button id="nextBtn" class="primary">下一題</button>
-      <button id="resetBtn" class="ghost">重置分數</button>
-    </div>
-
-    <div id="hint" class="hint"></div>
-  </div>
-</div>
-
-<script>
-// ====== 50音題庫（清音 + ん）======
-const KANA = [
-["あ","ア","a"],["い","イ","i"],["う","ウ","u"],["え","エ","e"],["お","オ","o"],
-["か","カ","ka"],["き","キ","ki"],["く","ク","ku"],["け","ケ","ke"],["こ","コ","ko"],
-["さ","サ","sa"],["し","シ","shi"],["す","ス","su"],["せ","セ","se"],["そ","ソ","so"],
-["た","タ","ta"],["ち","チ","chi"],["つ","ツ","tsu"],["て","テ","te"],["と","ト","to"],
-["な","ナ","na"],["に","ニ","ni"],["ぬ","ヌ","nu"],["ね","ネ","ne"],["の","ノ","no"],
-["は","ハ","ha"],["ひ","ヒ","hi"],["ふ","フ","fu"],["へ","ヘ","he"],["ほ","ホ","ho"],
-["ま","マ","ma"],["み","ミ","mi"],["む","ム","mu"],["め","メ","me"],["も","モ","mo"],
-["や","ヤ","ya"],["ゆ","ユ","yu"],["よ","ヨ","yo"],
-["ら","ラ","ra"],["り","リ","ri"],["る","ル","ru"],["れ","レ","re"],["ろ","ロ","ro"],
-["わ","ワ","wa"],["を","ヲ","wo"],
-["ん","ン","n"]
-];
-
-let script = "hira"; // hira | kata
-let mode = "k2r";    // k2r | r2k | l2k
-let current;
-let correct;
-let score = { c:0, t:0 };
-let revealed = false;
-
-// ===== 工具 =====
-function rand(n){ return Math.floor(Math.random()*n); }
-function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
-
-function kanaLabel(item){
-  return script==="hira" ? item[0] : item[1];
+textarea {
+  width: 100%;
+  min-height: 110px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 10px 12px;
+  font-size: 16px;
+  outline: none;
 }
-
-// ===== TTS：改唸「假名」======
-function speakKana(kanaText){
-  if(!("speechSynthesis" in window)) {
-    alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
-    return;
-  }
-  window.speechSynthesis.cancel();
-
-  const u = new SpeechSynthesisUtterance(kanaText);
-  u.lang = "ja-JP";
-  u.rate = 0.9;
-  u.pitch = 1.0;
-
-  // 嘗試選日文 voice（不一定每台都有）
-  const voices = window.speechSynthesis.getVoices?.() || [];
-  const jp = voices.find(v => (v.lang || "").toLowerCase().startsWith("ja"));
-  if(jp) u.voice = jp;
-
-  window.speechSynthesis.speak(u);
-}
-
-// 某些瀏覽器 voices 載入較慢
-if("speechSynthesis" in window){
-  window.speechSynthesis.onvoiceschanged = () => {};
-}
-
-// ===== 出題 =====
-function newQuestion(){
-  revealed = false;
-  document.getElementById("hint").textContent = "";
-
-  current = KANA[rand(KANA.length)];
-  const [h,k,r] = current;
-
-  const promptEl = document.getElementById("prompt");
-  const subEl = document.getElementById("subprompt");
-
-  if(mode==="k2r"){
-    promptEl.textContent = kanaLabel(current);
-    subEl.textContent = "請選擇正確的 romaji 發音";
-    correct = r;
-
-    let opts=[r];
-    while(opts.length<4){
-      const rr = KANA[rand(KANA.length)][2];
-      if(!opts.includes(rr)) opts.push(rr);
-    }
-    renderChoices(shuffle(opts));
-
-  } else if(mode==="r2k"){
-    promptEl.textContent = r;
-    subEl.textContent = "請選擇正確的假名";
-    correct = kanaLabel(current);
-
-    let opts=[correct];
-    while(opts.length<4){
-      const kk2 = script==="hira"
-        ? KANA[rand(KANA.length)][0]
-        : KANA[rand(KANA.length)][1];
-      if(!opts.includes(kk2)) opts.push(kk2);
-    }
-    renderChoices(shuffle(opts));
-
-  } else { // l2k 聽力→假名
-    promptEl.textContent = "🔊";
-    subEl.textContent = "按播放聽發音，選出正確假名（可重播）";
-    correct = kanaLabel(current);
-
-    let opts=[correct];
-    while(opts.length<4){
-      const kk2 = script==="hira"
-        ? KANA[rand(KANA.length)][0]
-        : KANA[rand(KANA.length)][1];
-      if(!opts.includes(kk2)) opts.push(kk2);
-    }
-    renderChoices(shuffle(opts));
-
-    // 自動播放一次：改成唸假名（更準）
-    setTimeout(()=> speakKana(kanaLabel(current)), 120);
-  }
-}
-
-// ===== 畫選項 =====
-function renderChoices(arr){
-  const box=document.getElementById("choices");
-  box.innerHTML="";
-
-  arr.forEach(v=>{
-    const b=document.createElement("button");
-    b.className="choice";
-    b.textContent=v;
-
-    b.onclick=()=>{
-      if(revealed) return;
-      revealed=true;
-
-      score.t++;
-      if(v===correct){
-        score.c++;
-        b.classList.add("correct");
-      }else{
-        b.classList.add("wrong");
-      }
-
-      updateScore();
-      document.getElementById("hint").textContent =
-        `正解：${correct}（${current[0]} / ${current[1]} = ${current[2]}）`;
-    };
-
-    box.appendChild(b);
-  });
-}
-
-function updateScore(){
-  document.getElementById("scoreBox").textContent = `${score.c} / ${score.t}`;
-}
-
-// ===== 介面事件 =====
-const hiraBtn = document.getElementById("hiraBtn");
-const kataBtn = document.getElementById("kataBtn");
-const k2rBtn  = document.getElementById("k2rBtn");
-const r2kBtn  = document.getElementById("r2kBtn");
-const l2kBtn  = document.getElementById("l2kBtn");
-
-hiraBtn.onclick=()=>{
-  script="hira";
-  hiraBtn.classList.add("active");
-  kataBtn.classList.remove("active");
-  newQuestion();
-};
-
-kataBtn.onclick=()=>{
-  script="kata";
-  kataBtn.classList.add("active");
-  hiraBtn.classList.remove("active");
-  newQuestion();
-};
-
-k2rBtn.onclick=()=>{
-  mode="k2r";
-  k2rBtn.classList.add("active");
-  r2kBtn.classList.remove("active");
-  l2kBtn.classList.remove("active");
-  newQuestion();
-};
-
-r2kBtn.onclick=()=>{
-  mode="r2k";
-  r2kBtn.classList.add("active");
-  k2rBtn.classList.remove("active");
-  l2kBtn.classList.remove("active");
-  newQuestion();
-};
-
-l2kBtn.onclick=()=>{
-  mode="l2k";
-  l2kBtn.classList.add("active");
-  k2rBtn.classList.remove("active");
-  r2kBtn.classList.remove("active");
-  newQuestion();
-};
-
-document.getElementById("nextBtn").onclick=()=>newQuestion();
-
-document.getElementById("resetBtn").onclick=()=>{
-  score={c:0,t:0};
-  updateScore();
-  newQuestion();
-};
-
-// 播放：統一播放「本題假名」的聲音（比播 romaji 穩）
-document.getElementById("playBtn").onclick=()=>{
-  if(!current) return;
-  speakKana(kanaLabel(current));
-};
-
-// ===== 啟動 =====
-updateScore();
-newQuestion();
-</script>
-
-</body>
-</html>
-
+textarea:focus {
