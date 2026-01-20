@@ -55,4 +55,406 @@ textarea {
   font-size: 16px;
   outline: none;
 }
-textarea:focus {
+textarea:focus { border-color: #111827; }
+
+.kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.live { color: #6b7280; }
+.final { color: #111827; font-weight: 800; }
+.note { margin-top: 10px; padding: 10px 12px; border: 1px dashed #d1d5db; border-radius: 12px; background: #fff; }
+</style>
+</head>
+
+<body>
+<div class="header">
+  <div class="title">guide – Japanese helper <span class="badge">聽力 + 語音辨識</span></div>
+</div>
+
+<div class="main">
+  <div class="grid">
+
+    <!-- 左側：50音測驗 -->
+    <div class="card">
+      <div class="row">
+        <div class="group">
+          <div class="label">文字系統</div>
+          <div class="seg">
+            <button id="hiraBtn" class="active">平假名</button>
+            <button id="kataBtn">片假名</button>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="label">模式</div>
+          <div class="seg">
+            <button id="k2rBtn" class="active">假名→發音</button>
+            <button id="r2kBtn">發音→假名</button>
+            <button id="l2kBtn">聽力→假名</button>
+          </div>
+          <div class="small">聽力模式用瀏覽器 TTS 播放「假名」</div>
+        </div>
+
+        <div class="group">
+          <div class="label">分數</div>
+          <div id="scoreBox">0 / 0</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div id="prompt" class="prompt">あ</div>
+        <div id="subprompt" class="subprompt"></div>
+        <div id="choices" class="choices"></div>
+
+        <div class="actions">
+          <button id="playBtn" class="playBtn">🔊 播放</button>
+          <button id="nextBtn" class="primary">下一題</button>
+          <button id="resetBtn" class="ghost">重置分數</button>
+        </div>
+
+        <div id="hint" class="hint"></div>
+      </div>
+    </div>
+
+    <!-- 右側：語音辨識 -->
+    <div class="card">
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div>
+          <div style="font-weight:800; font-size:18px;">🎤 語音讀入 → 日文文字</div>
+          <div class="small">
+            使用 <span class="kbd">SpeechRecognition</span>（Chrome/Edge 最穩）。
+            iOS Safari 可能不支援。
+          </div>
+        </div>
+        <div class="badge" id="srStatus">狀態：未啟動</div>
+      </div>
+
+      <div class="actions">
+        <button id="srStartBtn" class="primary">開始錄音</button>
+        <button id="srStopBtn" class="ghost" disabled>停止</button>
+        <button id="srClearBtn" class="danger">清除</button>
+        <button id="srSpeakBtn" class="playBtn">🔊 把結果唸出來</button>
+      </div>
+
+      <div class="note">
+        <div class="small">即時辨識（interim）：<span class="live" id="srLive">（空）</span></div>
+        <div class="small">最終結果（final）：<span class="final" id="srFinal">（空）</span></div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <div class="label">你也可以手動貼上/修正：</div>
+        <textarea id="srText" placeholder="辨識結果會同步到這裡，你也可以自己修改…"></textarea>
+      </div>
+
+      <div class="note small">
+        建議：你可以唸短句，例如「わたしは きんもん に すんでいます」，
+        看看辨識是否轉成「私は金門に住んでいます」之類的文字。
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// =================== 50音測驗（同前版） ===================
+const KANA = [
+["あ","ア","a"],["い","イ","i"],["う","ウ","u"],["え","エ","e"],["お","オ","o"],
+["か","カ","ka"],["き","キ","ki"],["く","ク","ku"],["け","ケ","ke"],["こ","コ","ko"],
+["さ","サ","sa"],["し","シ","shi"],["す","ス","su"],["せ","セ","se"],["そ","ソ","so"],
+["た","タ","ta"],["ち","チ","chi"],["つ","ツ","tsu"],["て","テ","te"],["と","ト","to"],
+["な","ナ","na"],["に","ニ","ni"],["ぬ","ヌ","nu"],["ね","ネ","ne"],["の","ノ","no"],
+["は","ハ","ha"],["ひ","ヒ","hi"],["ふ","フ","fu"],["へ","ヘ","he"],["ほ","ホ","ho"],
+["ま","マ","ma"],["み","ミ","mi"],["む","ム","mu"],["め","メ","me"],["も","モ","mo"],
+["や","ヤ","ya"],["ゆ","ユ","yu"],["よ","ヨ","yo"],
+["ら","ラ","ra"],["り","リ","ri"],["る","ル","ru"],["れ","レ","re"],["ろ","ロ","ro"],
+["わ","ワ","wa"],["を","ヲ","wo"],
+["ん","ン","n"]
+];
+
+let script = "hira"; // hira | kata
+let mode = "k2r";    // k2r | r2k | l2k
+let current;
+let correct;
+let score = { c:0, t:0 };
+let revealed = false;
+
+function rand(n){ return Math.floor(Math.random()*n); }
+function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
+function kanaLabel(item){ return script==="hira" ? item[0] : item[1]; }
+
+// ===== TTS：唸假名（比唸 romaji 準）=====
+function speakKana(kanaText){
+  if(!("speechSynthesis" in window)) {
+    alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
+    return;
+  }
+  window.speechSynthesis.cancel();
+
+  const u = new SpeechSynthesisUtterance(kanaText);
+  u.lang = "ja-JP";
+  u.rate = 0.9;
+  u.pitch = 1.0;
+
+  const voices = window.speechSynthesis.getVoices?.() || [];
+  const jp = voices.find(v => (v.lang || "").toLowerCase().startsWith("ja"));
+  if(jp) u.voice = jp;
+
+  window.speechSynthesis.speak(u);
+}
+
+if("speechSynthesis" in window){
+  window.speechSynthesis.onvoiceschanged = () => {};
+}
+
+function updateScore(){
+  document.getElementById("scoreBox").textContent = `${score.c} / ${score.t}`;
+}
+
+function renderChoices(arr){
+  const box=document.getElementById("choices");
+  box.innerHTML="";
+
+  arr.forEach(v=>{
+    const b=document.createElement("button");
+    b.className="choice";
+    b.textContent=v;
+
+    b.onclick=()=>{
+      if(revealed) return;
+      revealed=true;
+
+      score.t++;
+      if(v===correct){
+        score.c++;
+        b.classList.add("correct");
+      }else{
+        b.classList.add("wrong");
+      }
+
+      updateScore();
+      document.getElementById("hint").textContent =
+        `正解：${correct}（${current[0]} / ${current[1]} = ${current[2]}）`;
+    };
+
+    box.appendChild(b);
+  });
+}
+
+function newQuestion(){
+  revealed = false;
+  document.getElementById("hint").textContent = "";
+
+  current = KANA[rand(KANA.length)];
+  const [h,k,r] = current;
+
+  const promptEl = document.getElementById("prompt");
+  const subEl = document.getElementById("subprompt");
+
+  if(mode==="k2r"){
+    promptEl.textContent = kanaLabel(current);
+    subEl.textContent = "請選擇正確的 romaji 發音";
+    correct = r;
+
+    let opts=[r];
+    while(opts.length<4){
+      const rr = KANA[rand(KANA.length)][2];
+      if(!opts.includes(rr)) opts.push(rr);
+    }
+    renderChoices(shuffle(opts));
+
+  } else if(mode==="r2k"){
+    promptEl.textContent = r;
+    subEl.textContent = "請選擇正確的假名";
+    correct = kanaLabel(current);
+
+    let opts=[correct];
+    while(opts.length<4){
+      const kk2 = script==="hira"
+        ? KANA[rand(KANA.length)][0]
+        : KANA[rand(KANA.length)][1];
+      if(!opts.includes(kk2)) opts.push(kk2);
+    }
+    renderChoices(shuffle(opts));
+
+  } else { // l2k
+    promptEl.textContent = "🔊";
+    subEl.textContent = "按播放聽發音，選出正確假名（可重播）";
+    correct = kanaLabel(current);
+
+    let opts=[correct];
+    while(opts.length<4){
+      const kk2 = script==="hira"
+        ? KANA[rand(KANA.length)][0]
+        : KANA[rand(KANA.length)][1];
+      if(!opts.includes(kk2)) opts.push(kk2);
+    }
+    renderChoices(shuffle(opts));
+    setTimeout(()=> speakKana(kanaLabel(current)), 120);
+  }
+}
+
+// UI events
+const hiraBtn = document.getElementById("hiraBtn");
+const kataBtn = document.getElementById("kataBtn");
+const k2rBtn  = document.getElementById("k2rBtn");
+const r2kBtn  = document.getElementById("r2kBtn");
+const l2kBtn  = document.getElementById("l2kBtn");
+
+hiraBtn.onclick=()=>{
+  script="hira";
+  hiraBtn.classList.add("active");
+  kataBtn.classList.remove("active");
+  newQuestion();
+};
+kataBtn.onclick=()=>{
+  script="kata";
+  kataBtn.classList.add("active");
+  hiraBtn.classList.remove("active");
+  newQuestion();
+};
+k2rBtn.onclick=()=>{
+  mode="k2r";
+  k2rBtn.classList.add("active");
+  r2kBtn.classList.remove("active");
+  l2kBtn.classList.remove("active");
+  newQuestion();
+};
+r2kBtn.onclick=()=>{
+  mode="r2k";
+  r2kBtn.classList.add("active");
+  k2rBtn.classList.remove("active");
+  l2kBtn.classList.remove("active");
+  newQuestion();
+};
+l2kBtn.onclick=()=>{
+  mode="l2k";
+  l2kBtn.classList.add("active");
+  k2rBtn.classList.remove("active");
+  r2kBtn.classList.remove("active");
+  newQuestion();
+};
+
+document.getElementById("nextBtn").onclick=()=>newQuestion();
+document.getElementById("resetBtn").onclick=()=>{
+  score={c:0,t:0};
+  updateScore();
+  newQuestion();
+};
+document.getElementById("playBtn").onclick=()=>{
+  if(!current) return;
+  speakKana(kanaLabel(current));
+};
+
+// =================== 語音辨識（SpeechRecognition） ===================
+const srStatus = document.getElementById("srStatus");
+const srStartBtn = document.getElementById("srStartBtn");
+const srStopBtn  = document.getElementById("srStopBtn");
+const srClearBtn = document.getElementById("srClearBtn");
+const srSpeakBtn = document.getElementById("srSpeakBtn");
+
+const srLiveEl  = document.getElementById("srLive");
+const srFinalEl = document.getElementById("srFinal");
+const srText    = document.getElementById("srText");
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recog = null;
+let recognizing = false;
+
+function setSRStatus(text){
+  srStatus.textContent = `狀態：${text}`;
+}
+
+function ensureRecognition(){
+  if(!SpeechRecognition){
+    setSRStatus("不支援（建議 Chrome/Edge）");
+    alert("此瀏覽器不支援 SpeechRecognition（語音辨識）。建議用 Chrome / Edge 桌機或 Android。iOS Safari 通常不支援。");
+    return null;
+  }
+  if(recog) return recog;
+
+  recog = new SpeechRecognition();
+  recog.lang = "ja-JP";
+  recog.interimResults = true;
+  recog.continuous = true; // 可持續聽
+
+  recog.onstart = () => {
+    recognizing = true;
+    setSRStatus("錄音中…");
+    srStartBtn.disabled = true;
+    srStopBtn.disabled = false;
+  };
+
+  recog.onend = () => {
+    recognizing = false;
+    setSRStatus("已停止");
+    srStartBtn.disabled = false;
+    srStopBtn.disabled = true;
+  };
+
+  recog.onerror = (e) => {
+    setSRStatus("錯誤：" + (e.error || "unknown"));
+  };
+
+  recog.onresult = (event) => {
+    let interim = "";
+    let finalText = srFinalEl.textContent === "（空）" ? "" : srFinalEl.textContent;
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const res = event.results[i];
+      const txt = res[0].transcript;
+      if(res.isFinal){
+        finalText += (finalText ? " " : "") + txt.trim();
+      } else {
+        interim += txt;
+      }
+    }
+
+    srLiveEl.textContent = interim ? interim : "（空）";
+    srFinalEl.textContent = finalText ? finalText : "（空）";
+
+    // 同步到 textarea（方便你手動修正）
+    srText.value = finalText;
+  };
+
+  return recog;
+}
+
+srStartBtn.onclick = () => {
+  const r = ensureRecognition();
+  if(!r) return;
+  try { r.start(); } catch(_) {}
+};
+
+srStopBtn.onclick = () => {
+  if(recog && recognizing){
+    recog.stop();
+  }
+};
+
+srClearBtn.onclick = () => {
+  srLiveEl.textContent = "（空）";
+  srFinalEl.textContent = "（空）";
+  srText.value = "";
+};
+
+srSpeakBtn.onclick = () => {
+  const t = (srText.value || "").trim();
+  if(!t){
+    alert("目前沒有辨識結果可播放。");
+    return;
+  }
+  // 把辨識出的日文再唸一次，當作自我校正
+  speakKana(t);
+};
+
+// 讓你手動修改 textarea 時，同步到 final 顯示
+srText.addEventListener("input", () => {
+  const t = srText.value.trim();
+  srFinalEl.textContent = t ? t : "（空）";
+});
+
+// =================== 啟動 ===================
+updateScore();
+newQuestion();
+setSRStatus(SpeechRecognition ? "未啟動" : "不支援");
+</script>
+</body>
+</html>
