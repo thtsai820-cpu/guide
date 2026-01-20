@@ -20,7 +20,7 @@ body { margin: 0; }
 .title { font-weight: 700; font-size: 18px; }
 
 .main {
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
   padding: 16px;
 }
@@ -33,11 +33,11 @@ body { margin: 0; }
   margin-top: 12px;
 }
 
-.row { display: flex; gap: 12px; flex-wrap: wrap; }
-.group { min-width: 160px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+.group { min-width: 170px; }
 .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
 
-.seg { display: inline-flex; border: 1px solid #e5e7eb; border-radius: 12px; }
+.seg { display: inline-flex; border: 1px solid #e5e7eb; border-radius: 12 160px; overflow: hidden; }
 .seg button {
   border: 0;
   background: white;
@@ -50,7 +50,13 @@ body { margin: 0; }
   font-size: 56px;
   font-weight: 800;
   text-align: center;
-  margin: 10px 0;
+  margin: 8px 0 4px;
+}
+.subprompt {
+  text-align: center;
+  color: #6b7280;
+  margin-bottom: 6px;
+  font-size: 14px;
 }
 
 .choices {
@@ -71,28 +77,36 @@ body { margin: 0; }
 .correct { background: #ecfdf5; border-color: #16a34a; }
 .wrong { background: #fef2f2; border-color: #dc2626; }
 
-.actions { margin-top: 12px; display: flex; gap: 10px; }
-.primary {
-  background: #111827; color: white;
-  border: 1px solid #111827;
+.actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+.primary, .ghost, .playBtn {
   padding: 10px 12px; border-radius: 12px;
-  cursor: pointer;
-}
-.ghost {
-  background: white;
+  cursor: pointer; font-weight: 700;
   border: 1px solid #e5e7eb;
-  padding: 10px 12px; border-radius: 12px;
-  cursor: pointer;
+  background: white;
 }
+.primary { background: #111827; color: white; border-color: #111827; }
+.playBtn { border-style: dashed; }
+.ghost { color: #111827; }
 
 .hint { margin-top: 10px; font-weight: 700; }
+.small { font-size: 12px; color: #6b7280; font-weight: 500; }
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  font-size: 12px;
+  color: #374151;
+  background: #fff;
+}
 </style>
 </head>
 
 <body>
 
 <div class="header">
-  <div class="title">guide – 50音測驗</div>
+  <div class="title">guide – 50音測驗 <span class="badge">含聽力模式</span></div>
 </div>
 
 <div class="main">
@@ -113,7 +127,9 @@ body { margin: 0; }
       <div class="seg">
         <button id="k2rBtn" class="active">假名→發音</button>
         <button id="r2kBtn">發音→假名</button>
+        <button id="l2kBtn">聽力→假名</button>
       </div>
+      <div class="small">聽力模式會用瀏覽器 TTS 播放</div>
     </div>
 
     <div class="group">
@@ -126,10 +142,12 @@ body { margin: 0; }
 
 <div class="card">
   <div id="prompt" class="prompt">あ</div>
+  <div id="subprompt" class="subprompt"></div>
 
   <div id="choices" class="choices"></div>
 
   <div class="actions">
+    <button id="playBtn" class="playBtn">🔊 播放</button>
     <button id="nextBtn" class="primary">下一題</button>
     <button id="resetBtn" class="ghost">重置分數</button>
   </div>
@@ -155,8 +173,8 @@ const KANA = [
 ["ん","ン","n"]
 ];
 
-let script = "hira";
-let mode = "k2r";
+let script = "hira"; // hira | kata
+let mode = "k2r";    // k2r | r2k | l2k
 let current;
 let correct;
 let score = { c:0, t:0 };
@@ -164,9 +182,38 @@ let revealed = false;
 
 // ===== 工具 =====
 function rand(n){ return Math.floor(Math.random()*n); }
+function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
 
-function shuffle(a){
-  return a.sort(()=>Math.random()-0.5);
+function kanaLabel(item){
+  return script==="hira" ? item[0] : item[1];
+}
+
+// ===== TTS（聽力播放）=====
+function speakJP(text){
+  if(!("speechSynthesis" in window)) {
+    alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
+    return;
+  }
+
+  // 停掉上一句（避免連播疊在一起）
+  window.speechSynthesis.cancel();
+
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ja-JP";
+  u.rate = 0.9;   // 稍慢一點比較像學習
+  u.pitch = 1.0;
+
+  // 嘗試挑日文 voice（各瀏覽器 voice 名稱不同）
+  const voices = window.speechSynthesis.getVoices?.() || [];
+  const jp = voices.find(v => (v.lang || "").toLowerCase().startsWith("ja"));
+  if(jp) u.voice = jp;
+
+  window.speechSynthesis.speak(u);
+}
+
+// 某些瀏覽器要先載入 voices
+if("speechSynthesis" in window){
+  window.speechSynthesis.onvoiceschanged = () => {};
 }
 
 // ===== 出題 =====
@@ -177,9 +224,13 @@ function newQuestion(){
   current = KANA[rand(KANA.length)];
   const [h,k,r] = current;
 
+  // 顯示區（prompt/subprompt）
+  const promptEl = document.getElementById("prompt");
+  const subEl = document.getElementById("subprompt");
+
   if(mode==="k2r"){
-    document.getElementById("prompt").textContent =
-      script==="hira"?h:k;
+    promptEl.textContent = kanaLabel(current);
+    subEl.textContent = "請選擇正確的 romaji 發音";
     correct = r;
 
     let opts=[r];
@@ -187,11 +238,12 @@ function newQuestion(){
       const rr = KANA[rand(KANA.length)][2];
       if(!opts.includes(rr)) opts.push(rr);
     }
-    renderChoices(shuffle(opts));
+    renderChoices(shuffle(opts), "romaji");
 
-  }else{
-    document.getElementById("prompt").textContent = r;
-    correct = script==="hira"?h:k;
+  } else if(mode==="r2k"){
+    promptEl.textContent = r;
+    subEl.textContent = "請選擇正確的假名";
+    correct = kanaLabel(current);
 
     let opts=[correct];
     while(opts.length<4){
@@ -200,12 +252,29 @@ function newQuestion(){
         : KANA[rand(KANA.length)][1];
       if(!opts.includes(kk)) opts.push(kk);
     }
-    renderChoices(shuffle(opts));
+    renderChoices(shuffle(opts), "kana");
+
+  } else { // l2k 聽力→假名
+    promptEl.textContent = "🔊";
+    subEl.textContent = "按播放聽發音，選出正確假名（可重播）";
+    correct = kanaLabel(current);
+
+    let opts=[correct];
+    while(opts.length<4){
+      const kk = script==="hira"
+        ? KANA[rand(KANA.length)][0]
+        : KANA[rand(KANA.length)][1];
+      if(!opts.includes(kk)) opts.push(kk);
+    }
+    renderChoices(shuffle(opts), "kana");
+
+    // 自動播放一次（如果被瀏覽器擋掉也沒關係，仍可手動按播放）
+    setTimeout(()=> speakJP(r), 80);
   }
 }
 
 // ===== 畫選項 =====
-function renderChoices(arr){
+function renderChoices(arr, kind){
   const box=document.getElementById("choices");
   box.innerHTML="";
 
@@ -237,36 +306,51 @@ function renderChoices(arr){
 }
 
 function updateScore(){
-  document.getElementById("scoreBox")
-    .textContent=`${score.c} / ${score.t}`;
+  document.getElementById("scoreBox").textContent = `${score.c} / ${score.t}`;
 }
 
 // ===== 介面事件 =====
-document.getElementById("hiraBtn").onclick=()=>{
+const hiraBtn = document.getElementById("hiraBtn");
+const kataBtn = document.getElementById("kataBtn");
+const k2rBtn  = document.getElementById("k2rBtn");
+const r2kBtn  = document.getElementById("r2kBtn");
+const l2kBtn  = document.getElementById("l2kBtn");
+
+hiraBtn.onclick=()=>{
   script="hira";
   hiraBtn.classList.add("active");
   kataBtn.classList.remove("active");
   newQuestion();
 };
 
-document.getElementById("kataBtn").onclick=()=>{
+kataBtn.onclick=()=>{
   script="kata";
   kataBtn.classList.add("active");
   hiraBtn.classList.remove("active");
   newQuestion();
 };
 
-document.getElementById("k2rBtn").onclick=()=>{
+k2rBtn.onclick=()=>{
   mode="k2r";
   k2rBtn.classList.add("active");
   r2kBtn.classList.remove("active");
+  l2kBtn.classList.remove("active");
   newQuestion();
 };
 
-document.getElementById("r2kBtn").onclick=()=>{
+r2kBtn.onclick=()=>{
   mode="r2k";
   r2kBtn.classList.add("active");
   k2rBtn.classList.remove("active");
+  l2kBtn.classList.remove("active");
+  newQuestion();
+};
+
+l2kBtn.onclick=()=>{
+  mode="l2k";
+  l2kBtn.classList.add("active");
+  k2rBtn.classList.remove("active");
+  r2kBtn.classList.remove("active");
   newQuestion();
 };
 
@@ -278,7 +362,15 @@ document.getElementById("resetBtn").onclick=()=>{
   newQuestion();
 };
 
+document.getElementById("playBtn").onclick=()=>{
+  // 聽力模式：播放 romaji（更像發音題）
+  // 其他模式：也讓你可以按播放（加分功能）
+  const r = current?.[2] || "a";
+  speakJP(r);
+};
+
 // ===== 啟動 =====
+updateScore();
 newQuestion();
 </script>
 
