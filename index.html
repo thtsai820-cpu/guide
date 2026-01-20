@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>guide - 50音測驗</title>
+
+<style>
+:root {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", Arial;
+  background: #f6f7fb;
+}
+body { margin: 0; }
+
+.header {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 12px 16px;
+}
+.title { font-weight: 700; font-size: 18px; }
+
+.main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 12px;
+}
+
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.group { min-width: 160px; }
+.label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
+
+.seg { display: inline-flex; border: 1px solid #e5e7eb; border-radius: 12px; }
+.seg button {
+  border: 0;
+  background: white;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.seg .active { background: #111827; color: white; }
+
+.prompt {
+  font-size: 56px;
+  font-weight: 800;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.choice {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: white;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.correct { background: #ecfdf5; border-color: #16a34a; }
+.wrong { background: #fef2f2; border-color: #dc2626; }
+
+.actions { margin-top: 12px; display: flex; gap: 10px; }
+.primary {
+  background: #111827; color: white;
+  border: 1px solid #111827;
+  padding: 10px 12px; border-radius: 12px;
+  cursor: pointer;
+}
+.ghost {
+  background: white;
+  border: 1px solid #e5e7eb;
+  padding: 10px 12px; border-radius: 12px;
+  cursor: pointer;
+}
+
+.hint { margin-top: 10px; font-weight: 700; }
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="title">guide – 50音測驗</div>
+</div>
+
+<div class="main">
+
+<div class="card">
+  <div class="row">
+
+    <div class="group">
+      <div class="label">文字系統</div>
+      <div class="seg">
+        <button id="hiraBtn" class="active">平假名</button>
+        <button id="kataBtn">片假名</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="label">模式</div>
+      <div class="seg">
+        <button id="k2rBtn" class="active">假名→發音</button>
+        <button id="r2kBtn">發音→假名</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="label">分數</div>
+      <div id="scoreBox">0 / 0</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="card">
+  <div id="prompt" class="prompt">あ</div>
+
+  <div id="choices" class="choices"></div>
+
+  <div class="actions">
+    <button id="nextBtn" class="primary">下一題</button>
+    <button id="resetBtn" class="ghost">重置分數</button>
+  </div>
+
+  <div id="hint" class="hint"></div>
+</div>
+
+</div>
+
+<script>
+// ====== 50音題庫 ======
+const KANA = [
+["あ","ア","a"],["い","イ","i"],["う","ウ","u"],["え","エ","e"],["お","オ","o"],
+["か","カ","ka"],["き","キ","ki"],["く","ク","ku"],["け","ケ","ke"],["こ","コ","ko"],
+["さ","サ","sa"],["し","シ","shi"],["す","ス","su"],["せ","セ","se"],["そ","ソ","so"],
+["た","タ","ta"],["ち","チ","chi"],["つ","ツ","tsu"],["て","テ","te"],["と","ト","to"],
+["な","ナ","na"],["に","ニ","ni"],["ぬ","ヌ","nu"],["ね","ネ","ne"],["の","ノ","no"],
+["は","ハ","ha"],["ひ","ヒ","hi"],["ふ","フ","fu"],["へ","ヘ","he"],["ほ","ホ","ho"],
+["ま","マ","ma"],["み","ミ","mi"],["む","ム","mu"],["め","メ","me"],["も","モ","mo"],
+["や","ヤ","ya"],["ゆ","ユ","yu"],["よ","ヨ","yo"],
+["ら","ラ","ra"],["り","リ","ri"],["る","ル","ru"],["れ","レ","re"],["ろ","ロ","ro"],
+["わ","ワ","wa"],["を","ヲ","wo"],
+["ん","ン","n"]
+];
+
+let script = "hira";
+let mode = "k2r";
+let current;
+let correct;
+let score = { c:0, t:0 };
+let revealed = false;
+
+// ===== 工具 =====
+function rand(n){ return Math.floor(Math.random()*n); }
+
+function shuffle(a){
+  return a.sort(()=>Math.random()-0.5);
+}
+
+// ===== 出題 =====
+function newQuestion(){
+  revealed = false;
+  document.getElementById("hint").textContent = "";
+
+  current = KANA[rand(KANA.length)];
+  const [h,k,r] = current;
+
+  if(mode==="k2r"){
+    document.getElementById("prompt").textContent =
+      script==="hira"?h:k;
+    correct = r;
+
+    let opts=[r];
+    while(opts.length<4){
+      const rr = KANA[rand(KANA.length)][2];
+      if(!opts.includes(rr)) opts.push(rr);
+    }
+    renderChoices(shuffle(opts));
+
+  }else{
+    document.getElementById("prompt").textContent = r;
+    correct = script==="hira"?h:k;
+
+    let opts=[correct];
+    while(opts.length<4){
+      const kk = script==="hira"
+        ? KANA[rand(KANA.length)][0]
+        : KANA[rand(KANA.length)][1];
+      if(!opts.includes(kk)) opts.push(kk);
+    }
+    renderChoices(shuffle(opts));
+  }
+}
+
+// ===== 畫選項 =====
+function renderChoices(arr){
+  const box=document.getElementById("choices");
+  box.innerHTML="";
+
+  arr.forEach(v=>{
+    const b=document.createElement("button");
+    b.className="choice";
+    b.textContent=v;
+
+    b.onclick=()=>{
+      if(revealed) return;
+      revealed=true;
+
+      score.t++;
+      if(v===correct){
+        score.c++;
+        b.classList.add("correct");
+      }else{
+        b.classList.add("wrong");
+      }
+
+      updateScore();
+
+      document.getElementById("hint").textContent =
+        `正解：${correct}（${current[0]} / ${current[1]} = ${current[2]}）`;
+    };
+
+    box.appendChild(b);
+  });
+}
+
+function updateScore(){
+  document.getElementById("scoreBox")
+    .textContent=`${score.c} / ${score.t}`;
+}
+
+// ===== 介面事件 =====
+document.getElementById("hiraBtn").onclick=()=>{
+  script="hira";
+  hiraBtn.classList.add("active");
+  kataBtn.classList.remove("active");
+  newQuestion();
+};
+
+document.getElementById("kataBtn").onclick=()=>{
+  script="kata";
+  kataBtn.classList.add("active");
+  hiraBtn.classList.remove("active");
+  newQuestion();
+};
+
+document.getElementById("k2rBtn").onclick=()=>{
+  mode="k2r";
+  k2rBtn.classList.add("active");
+  r2kBtn.classList.remove("active");
+  newQuestion();
+};
+
+document.getElementById("r2kBtn").onclick=()=>{
+  mode="r2k";
+  r2kBtn.classList.add("active");
+  k2rBtn.classList.remove("active");
+  newQuestion();
+};
+
+document.getElementById("nextBtn").onclick=()=>newQuestion();
+
+document.getElementById("resetBtn").onclick=()=>{
+  score={c:0,t:0};
+  updateScore();
+  newQuestion();
+};
+
+// ===== 啟動 =====
+newQuestion();
+</script>
+
+</body>
+</html>
