@@ -11,9 +11,9 @@ body { margin: 0; }
 .header { background: white; border-bottom: 1px solid #e5e7eb; padding: 12px 16px; }
 .title { font-weight: 700; font-size: 18px; }
 
-.main { max-width: 900px; margin: 0 auto; padding: 16px; }
+.main { max-width: 980px; margin: 0 auto; padding: 16px; }
 .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-@media (min-width: 900px){ .grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 980px){ .grid { grid-template-columns: 1fr 1fr; } }
 
 .card { background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 14px; }
 .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
@@ -61,12 +61,27 @@ textarea:focus { border-color: #111827; }
 .live { color: #6b7280; }
 .final { color: #111827; font-weight: 800; }
 .note { margin-top: 10px; padding: 10px 12px; border: 1px dashed #d1d5db; border-radius: 12px; background: #fff; }
+
+.sectionTitle { font-weight: 900; font-size: 18px; display:flex; gap:10px; align-items:center; }
+.sectionDesc { margin-top: 4px; color:#6b7280; font-size: 12px; line-height:1.5; }
+.hr { height:1px; background:#e5e7eb; margin: 10px 0; border:0; }
+
+.quizPromptSm {
+  font-size: 40px;
+  font-weight: 900;
+  text-align: center;
+  margin: 8px 0 4px;
+  word-break: break-word;
+}
+.quizSubSm { text-align:center; color:#6b7280; font-size: 13px; margin-bottom: 8px; }
+
+.kpi { font-size: 18px; font-weight: 900; }
 </style>
 </head>
 
 <body>
 <div class="header">
-  <div class="title">guide – Japanese helper <span class="badge">聽力 + 語音辨識</span></div>
+  <div class="title">guide – Japanese helper <span class="badge">聽力 + 語音辨識 + 小測驗遊戲</span></div>
 </div>
 
 <div class="main">
@@ -95,7 +110,7 @@ textarea:focus { border-color: #111827; }
 
         <div class="group">
           <div class="label">分數</div>
-          <div id="scoreBox">0 / 0</div>
+          <div id="scoreBox" class="kpi">0 / 0</div>
         </div>
       </div>
 
@@ -145,16 +160,143 @@ textarea:focus { border-color: #111827; }
       </div>
 
       <div class="note small">
-        建議：你可以唸短句，例如「わたしは きんもん に すんでいます」，
-        看看辨識是否轉成「私は金門に住んでいます」之類的文字。
+        建議：你可以唸短句，例如「わたしは きんもん に すんでいます」，看看辨識是否轉成「私は金門に住んでいます」之類的文字。
       </div>
     </div>
 
   </div>
+
+  <!-- 新增：問候語小測驗 -->
+  <div class="card" style="margin-top:12px;">
+    <div class="sectionTitle">🧩 問候語小測驗（中⇄日） <span class="badge">可擴充</span></div>
+    <div class="sectionDesc">
+      遊戲玩法：每題四選一，可切換「中文→選日文」或「日文→選中文」。可選擇是否播放日文（題目/正解）。
+    </div>
+    <hr class="hr" />
+
+    <div class="row">
+      <div class="group">
+        <div class="label">方向</div>
+        <div class="seg">
+          <button id="greetC2JBtn" class="active">中文 → 選日文</button>
+          <button id="greetJ2CBtn">日文 → 選中文</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label">發音</div>
+        <div class="seg">
+          <button id="greetTTSOffBtn" class="active">不播放</button>
+          <button id="greetTTSOnBtn">播放日文</button>
+        </div>
+        <div class="small">播放內容：題目若為日文就播題目；題目為中文就播放正確日文</div>
+      </div>
+
+      <div class="group">
+        <div class="label">分數</div>
+        <div id="greetScore" class="kpi">0 / 0</div>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <div id="greetPrompt" class="quizPromptSm">你好</div>
+      <div id="greetSub" class="quizSubSm">請選出正確對應</div>
+      <div id="greetChoices" class="choices"></div>
+
+      <div class="actions">
+        <button id="greetPlayBtn" class="playBtn">🔊 播放</button>
+        <button id="greetNextBtn" class="primary">下一題</button>
+        <button id="greetResetBtn" class="ghost">重置分數</button>
+      </div>
+
+      <div id="greetHint" class="hint"></div>
+    </div>
+  </div>
+
+  <!-- 新增：單字小測驗 -->
+  <div class="card" style="margin-top:12px;">
+    <div class="sectionTitle">🧩 單字小測驗（中⇄日） <span class="badge">可擴充</span></div>
+    <div class="sectionDesc">
+      遊戲玩法同上。你未來要加更多單字，只要把資料加入陣列即可。
+    </div>
+    <hr class="hr" />
+
+    <div class="row">
+      <div class="group">
+        <div class="label">方向</div>
+        <div class="seg">
+          <button id="wordC2JBtn" class="active">中文 → 選日文</button>
+          <button id="wordJ2CBtn">日文 → 選中文</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label">發音</div>
+        <div class="seg">
+          <button id="wordTTSOffBtn" class="active">不播放</button>
+          <button id="wordTTSOnBtn">播放日文</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label">分數</div>
+        <div id="wordScore" class="kpi">0 / 0</div>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <div id="wordPrompt" class="quizPromptSm">蘋果</div>
+      <div id="wordSub" class="quizSubSm">請選出正確對應</div>
+      <div id="wordChoices" class="choices"></div>
+
+      <div class="actions">
+        <button id="wordPlayBtn" class="playBtn">🔊 播放</button>
+        <button id="wordNextBtn" class="primary">下一題</button>
+        <button id="wordResetBtn" class="ghost">重置分數</button>
+      </div>
+
+      <div id="wordHint" class="hint"></div>
+    </div>
+  </div>
+
 </div>
 
 <script>
-// =================== 50音測驗（同前版） ===================
+/* ============================================================
+   共用工具
+============================================================ */
+function rand(n){ return Math.floor(Math.random()*n); }
+function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
+function uniqPush(arr, v){ if(!arr.includes(v)) arr.push(v); }
+
+/* ============================================================
+   TTS：唸日文（假名/日文句子）
+============================================================ */
+function speakJP(text){
+  if(!("speechSynthesis" in window)) {
+    alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
+    return;
+  }
+  window.speechSynthesis.cancel();
+
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ja-JP";
+  u.rate = 0.9;
+  u.pitch = 1.0;
+
+  const voices = window.speechSynthesis.getVoices?.() || [];
+  const jp = voices.find(v => (v.lang || "").toLowerCase().startsWith("ja"));
+  if(jp) u.voice = jp;
+
+  window.speechSynthesis.speak(u);
+}
+if("speechSynthesis" in window){
+  window.speechSynthesis.onvoiceschanged = () => {};
+}
+
+/* ============================================================
+   50音測驗（原本功能保留）
+============================================================ */
 const KANA = [
 ["あ","ア","a"],["い","イ","i"],["う","ウ","u"],["え","エ","e"],["お","オ","o"],
 ["か","カ","ka"],["き","キ","ki"],["く","ク","ku"],["け","ケ","ke"],["こ","コ","ko"],
@@ -176,33 +318,7 @@ let correct;
 let score = { c:0, t:0 };
 let revealed = false;
 
-function rand(n){ return Math.floor(Math.random()*n); }
-function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
 function kanaLabel(item){ return script==="hira" ? item[0] : item[1]; }
-
-// ===== TTS：唸假名（比唸 romaji 準）=====
-function speakKana(kanaText){
-  if(!("speechSynthesis" in window)) {
-    alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
-    return;
-  }
-  window.speechSynthesis.cancel();
-
-  const u = new SpeechSynthesisUtterance(kanaText);
-  u.lang = "ja-JP";
-  u.rate = 0.9;
-  u.pitch = 1.0;
-
-  const voices = window.speechSynthesis.getVoices?.() || [];
-  const jp = voices.find(v => (v.lang || "").toLowerCase().startsWith("ja"));
-  if(jp) u.voice = jp;
-
-  window.speechSynthesis.speak(u);
-}
-
-if("speechSynthesis" in window){
-  window.speechSynthesis.onvoiceschanged = () => {};
-}
 
 function updateScore(){
   document.getElementById("scoreBox").textContent = `${score.c} / ${score.t}`;
@@ -256,7 +372,7 @@ function newQuestion(){
     let opts=[r];
     while(opts.length<4){
       const rr = KANA[rand(KANA.length)][2];
-      if(!opts.includes(rr)) opts.push(rr);
+      uniqPush(opts, rr);
     }
     renderChoices(shuffle(opts));
 
@@ -270,7 +386,7 @@ function newQuestion(){
       const kk2 = script==="hira"
         ? KANA[rand(KANA.length)][0]
         : KANA[rand(KANA.length)][1];
-      if(!opts.includes(kk2)) opts.push(kk2);
+      uniqPush(opts, kk2);
     }
     renderChoices(shuffle(opts));
 
@@ -284,14 +400,14 @@ function newQuestion(){
       const kk2 = script==="hira"
         ? KANA[rand(KANA.length)][0]
         : KANA[rand(KANA.length)][1];
-      if(!opts.includes(kk2)) opts.push(kk2);
+      uniqPush(opts, kk2);
     }
     renderChoices(shuffle(opts));
-    setTimeout(()=> speakKana(kanaLabel(current)), 120);
+    setTimeout(()=> speakJP(kanaLabel(current)), 120);
   }
 }
 
-// UI events
+// UI events (50音)
 const hiraBtn = document.getElementById("hiraBtn");
 const kataBtn = document.getElementById("kataBtn");
 const k2rBtn  = document.getElementById("k2rBtn");
@@ -340,10 +456,12 @@ document.getElementById("resetBtn").onclick=()=>{
 };
 document.getElementById("playBtn").onclick=()=>{
   if(!current) return;
-  speakKana(kanaLabel(current));
+  speakJP(kanaLabel(current));
 };
 
-// =================== 語音辨識（SpeechRecognition） ===================
+/* ============================================================
+   語音辨識（SpeechRecognition）
+============================================================ */
 const srStatus = document.getElementById("srStatus");
 const srStartBtn = document.getElementById("srStartBtn");
 const srStopBtn  = document.getElementById("srStopBtn");
@@ -373,7 +491,7 @@ function ensureRecognition(){
   recog = new SpeechRecognition();
   recog.lang = "ja-JP";
   recog.interimResults = true;
-  recog.continuous = true; // 可持續聽
+  recog.continuous = true;
 
   recog.onstart = () => {
     recognizing = true;
@@ -409,8 +527,6 @@ function ensureRecognition(){
 
     srLiveEl.textContent = interim ? interim : "（空）";
     srFinalEl.textContent = finalText ? finalText : "（空）";
-
-    // 同步到 textarea（方便你手動修正）
     srText.value = finalText;
   };
 
@@ -441,17 +557,297 @@ srSpeakBtn.onclick = () => {
     alert("目前沒有辨識結果可播放。");
     return;
   }
-  // 把辨識出的日文再唸一次，當作自我校正
-  speakKana(t);
+  speakJP(t);
 };
 
-// 讓你手動修改 textarea 時，同步到 final 顯示
 srText.addEventListener("input", () => {
   const t = srText.value.trim();
   srFinalEl.textContent = t ? t : "（空）";
 });
 
-// =================== 啟動 ===================
+/* ============================================================
+   新增：中⇄日 小測驗遊戲（可重用）
+   - bank: [{ zh, ja }]
+   - direction: "C2J" 或 "J2C"
+============================================================ */
+function createBilingualQuiz(opts){
+  const {
+    bank,
+    ids,                // {prompt, sub, choices, score, hint}
+    btns,               // {dirA, dirB, ttsOff, ttsOn, play, next, reset}
+    labels,             // {dirA, dirB}
+    defaultDirection,   // "C2J" | "J2C"
+    titleForHint        // e.g. "對應"
+  } = opts;
+
+  let direction = defaultDirection || "C2J";
+  let ttsEnabled = false;
+  let q = null;           // current item {zh, ja}
+  let correct = null;     // correct string
+  let revealed = false;
+  let score = { c:0, t:0 };
+
+  function setScore(){
+    document.getElementById(ids.score).textContent = `${score.c} / ${score.t}`;
+  }
+
+  function setHint(text){ document.getElementById(ids.hint).textContent = text || ""; }
+
+  function getPromptText(item){
+    return direction === "C2J" ? item.zh : item.ja;
+  }
+  function getCorrectText(item){
+    return direction === "C2J" ? item.ja : item.zh;
+  }
+
+  function pickWrongChoices(item, n){
+    const pool = bank.filter(x => x !== item);
+    const out = [];
+    while(out.length < n && pool.length > 0){
+      const pick = pool.splice(rand(pool.length), 1)[0];
+      out.push(getCorrectText(pick));
+    }
+    return out;
+  }
+
+  function renderChoices(choicesArr){
+    const box = document.getElementById(ids.choices);
+    box.innerHTML = "";
+    choicesArr.forEach(v=>{
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.textContent = v;
+
+      b.onclick = () => {
+        if(revealed) return;
+        revealed = true;
+
+        score.t++;
+        if(v === correct){
+          score.c++;
+          b.classList.add("correct");
+        } else {
+          b.classList.add("wrong");
+        }
+        setScore();
+
+        setHint(`正解：${correct}（${titleForHint}：${q.zh} ⇄ ${q.ja}）`);
+
+        // 答完若啟用 TTS：播「正確日文」
+        if(ttsEnabled){
+          speakJP(q.ja);
+        }
+      };
+
+      box.appendChild(b);
+    });
+  }
+
+  function maybePlayForQuestion(){
+    if(!ttsEnabled || !q) return;
+
+    // 規則：題目若是日文 -> 播題目日文；題目若是中文 -> 播正解日文
+    if(direction === "J2C"){
+      speakJP(q.ja);
+    } else {
+      speakJP(q.ja);
+    }
+  }
+
+  function newQ(){
+    revealed = false;
+    setHint("");
+
+    q = bank[rand(bank.length)];
+    document.getElementById(ids.prompt).textContent = getPromptText(q);
+    document.getElementById(ids.sub).textContent = "請選出正確對應";
+
+    correct = getCorrectText(q);
+
+    const wrong = pickWrongChoices(q, 3);
+    const choices = shuffle([correct, ...wrong]);
+    renderChoices(choices);
+
+    // 出題時播放
+    setTimeout(()=> maybePlayForQuestion(), 100);
+  }
+
+  // buttons
+  document.getElementById(btns.dirA).onclick = () => {
+    direction = "C2J";
+    document.getElementById(btns.dirA).classList.add("active");
+    document.getElementById(btns.dirB).classList.remove("active");
+    newQ();
+  };
+  document.getElementById(btns.dirB).onclick = () => {
+    direction = "J2C";
+    document.getElementById(btns.dirB).classList.add("active");
+    document.getElementById(btns.dirA).classList.remove("active");
+    newQ();
+  };
+
+  document.getElementById(btns.ttsOff).onclick = () => {
+    ttsEnabled = false;
+    document.getElementById(btns.ttsOff).classList.add("active");
+    document.getElementById(btns.ttsOn).classList.remove("active");
+  };
+  document.getElementById(btns.ttsOn).onclick = () => {
+    ttsEnabled = true;
+    document.getElementById(btns.ttsOn).classList.add("active");
+    document.getElementById(btns.ttsOff).classList.remove("active");
+    // 立即播一次讓你確認
+    if(q) speakJP(q.ja);
+  };
+
+  document.getElementById(btns.play).onclick = () => {
+    if(!q) return;
+    // 永遠播放正確日文（避免播放中文）
+    speakJP(q.ja);
+  };
+  document.getElementById(btns.next).onclick = () => newQ();
+  document.getElementById(btns.reset).onclick = () => {
+    score = { c:0, t:0 };
+    setScore();
+    newQ();
+  };
+
+  // init active button state
+  // default direction: C2J -> dirA active already; J2C -> swap
+  if(defaultDirection === "J2C"){
+    direction = "J2C";
+    document.getElementById(btns.dirB).classList.add("active");
+    document.getElementById(btns.dirA).classList.remove("active");
+  }
+  setScore();
+  newQ();
+
+  // expose minimal extension hooks
+  return {
+    addItem: (zh, ja) => bank.push({ zh, ja }),
+    getState: () => ({ direction, ttsEnabled, score })
+  };
+}
+
+/* ============================================================
+   問候語資料（中 / 日）
+============================================================ */
+const GREETING_BANK = [
+  { zh: "你好", ja: "こんにちは" },
+  { zh: "早安", ja: "おはようございます" },
+  { zh: "晚上好", ja: "こんばんは" },
+  { zh: "晚安", ja: "おやすみなさい" },
+  { zh: "再見", ja: "さようなら" },
+  { zh: "短暫告別", ja: "じゃあね" },
+  { zh: "謝謝", ja: "ありがとうございます" },
+  { zh: "不客氣", ja: "どういたしまして" },
+  { zh: "對不起", ja: "すみません" },
+  { zh: "請多指教", ja: "よろしくお願いします" },
+  { zh: "麻煩您", ja: "お願いします" },
+  { zh: "好久不見", ja: "お久しぶりです" },
+  { zh: "你好嗎", ja: "お元気ですか" },
+  { zh: "恭喜您", ja: "おめでとうございます" },
+  { zh: "請保重", ja: "お大事に" },
+  { zh: "辛苦了", ja: "お疲れ様です" },
+  { zh: "我開動了", ja: "いただきます" },
+  { zh: "我吃飽了", ja: "ごちそうさまでした" },
+  { zh: "我出門了", ja: "行ってきます" },
+  { zh: "慢走", ja: "行ってらっしゃい" },
+  { zh: "我回來了", ja: "ただいま" },
+  { zh: "初次見面", ja: "はじめまして" },
+  { zh: "請等一下", ja: "ちょっと待ってください" },
+];
+
+/* ============================================================
+   單字資料（中 / 日）
+============================================================ */
+const WORD_BANK = [
+  { zh: "蘋果", ja: "りんご" },
+  { zh: "海豚", ja: "イルカ" },
+  { zh: "兔子", ja: "うさぎ" },
+  { zh: "蝦子", ja: "えび" },
+  { zh: "螃蟹", ja: "かに" },
+  { zh: "長頸鹿", ja: "きりん" },
+  { zh: "鯨魚", ja: "くじら" },
+  { zh: "橡皮擦", ja: "けしゴム" },
+  { zh: "鯊魚", ja: "サメ" },
+  { zh: "西瓜", ja: "すいか" },
+  { zh: "吸塵器", ja: "そうじき" },
+  { zh: "章魚", ja: "たこ" },
+  { zh: "地球", ja: "ちきゅう" },
+  { zh: "月亮", ja: "つき" },
+  { zh: "老虎", ja: "とら" },
+  { zh: "茄子", ja: "なす" },
+  { zh: "雞", ja: "にわとり" },
+  { zh: "貓", ja: "ねこ" },
+  { zh: "筆記本", ja: "ノート" },
+  { zh: "蜜蜂", ja: "はち" },
+  { zh: "船", ja: "ふね" },
+  { zh: "蛇", ja: "へび" },
+  { zh: "螢火蟲", ja: "ほたる" },
+  { zh: "麥克風", ja: "マイク" },
+  { zh: "橘子", ja: "みかん" },
+  { zh: "桃子", ja: "もも" },
+  { zh: "山", ja: "やま" },
+  { zh: "獅子", ja: "しし" },
+  { zh: "松鼠", ja: "りす" },
+  { zh: "紅寶石", ja: "ルビー" },
+  { zh: "檸檬", ja: "レモン" },
+  { zh: "火箭", ja: "ロケット" },
+  { zh: "鱷魚", ja: "わに" },
+];
+
+/* ============================================================
+   啟動：問候語 / 單字 小測驗
+============================================================ */
+const greetingQuiz = createBilingualQuiz({
+  bank: GREETING_BANK,
+  ids: {
+    prompt: "greetPrompt",
+    sub: "greetSub",
+    choices: "greetChoices",
+    score: "greetScore",
+    hint: "greetHint"
+  },
+  btns: {
+    dirA: "greetC2JBtn",
+    dirB: "greetJ2CBtn",
+    ttsOff: "greetTTSOffBtn",
+    ttsOn: "greetTTSOnBtn",
+    play: "greetPlayBtn",
+    next: "greetNextBtn",
+    reset: "greetResetBtn"
+  },
+  labels: { dirA: "中文 → 選日文", dirB: "日文 → 選中文" },
+  defaultDirection: "C2J",
+  titleForHint: "對應"
+});
+
+const wordQuiz = createBilingualQuiz({
+  bank: WORD_BANK,
+  ids: {
+    prompt: "wordPrompt",
+    sub: "wordSub",
+    choices: "wordChoices",
+    score: "wordScore",
+    hint: "wordHint"
+  },
+  btns: {
+    dirA: "wordC2JBtn",
+    dirB: "wordJ2CBtn",
+    ttsOff: "wordTTSOffBtn",
+    ttsOn: "wordTTSOnBtn",
+    play: "wordPlayBtn",
+    next: "wordNextBtn",
+    reset: "wordResetBtn"
+  },
+  labels: { dirA: "中文 → 選日文", dirB: "日文 → 選中文" },
+  defaultDirection: "C2J",
+  titleForHint: "對應"
+});
+
+/* ============================================================
+   初始化
+============================================================ */
 updateScore();
 newQuestion();
 setSRStatus(SpeechRecognition ? "未啟動" : "不支援");
