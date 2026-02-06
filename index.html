@@ -1,469 +1,818 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TM Learning</title>
-  <style>
-    :root { --bd:#ddd; --bg:#fafafa; --ok:#2e7d32; --bad:#c62828; }
-    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif; margin: 20px; }
-    h1 { margin: 0 0 10px; }
-    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
-    .card { border:1px solid var(--bd); border-radius:12px; padding:14px; background: #fff; }
-    .muted { color:#666; font-size:14px; }
-    input, select, button { padding:8px 10px; border:1px solid var(--bd); border-radius:10px; font-size:14px; }
-    button { cursor:pointer; background:#fff; }
-    button:disabled { opacity:.6; cursor:not-allowed; }
-    .section { margin-top: 14px; }
-    .pill { display:inline-block; padding:2px 8px; border:1px solid var(--bd); border-radius:999px; font-size:12px; color:#444; background:var(--bg); }
-    .list { margin:10px 0 0; padding:0; list-style:none; }
-    .list li { border:1px solid var(--bd); border-radius:12px; padding:10px 12px; margin-top:8px; background:#fff; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; color:#444; }
-    .choiceBtn { display:block; width:100%; text-align:left; padding:10px 12px; margin-top:8px; border:1px solid var(--bd); border-radius:12px; background:#fff; }
-    .choiceBtn.good { border:2px solid var(--ok); background:#e8f5e9; }
-    .choiceBtn.bad { border:2px solid var(--bad); background:#ffebee; }
-    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-    @media (max-width: 900px){ .grid2 { grid-template-columns: 1fr; } }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>guide - Japanese helper</title>
+
+<style>
+:root { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", Arial; background: #f6f7fb; }
+body { margin: 0; }
+.header { background: white; border-bottom: 1px solid #e5e7eb; padding: 12px 16px; }
+.title { font-weight: 700; font-size: 18px; }
+
+.main { max-width: 980px; margin: 0 auto; padding: 16px; }
+.grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 980px){ .grid { grid-template-columns: 1fr 1fr; } }
+
+.card { background: white; border: 1px solid #e5e7eb; border-radius: 16px; padding: 14px; }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+
+.group { min-width: 170px; }
+.label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
+
+.seg { display: inline-flex; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+.seg button { border: 0; background: white; padding: 8px 10px; cursor: pointer; }
+.seg .active { background: #111827; color: white; }
+
+.prompt { font-size: 56px; font-weight: 800; text-align: center; margin: 8px 0 4px; }
+.subprompt { text-align: center; color: #6b7280; margin-bottom: 6px; font-size: 14px; }
+
+.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.choice { padding: 12px; border: 1px solid #e5e7eb; border-radius: 14px; background: white; font-size: 18px; cursor: pointer; }
+.correct { background: #ecfdf5; border-color: #16a34a; }
+.wrong { background: #fef2f2; border-color: #dc2626; }
+
+.actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+.primary, .ghost, .playBtn, .danger {
+  padding: 10px 12px; border-radius: 12px; cursor: pointer; font-weight: 700;
+  border: 1px solid #e5e7eb; background: white;
+}
+.primary { background: #111827; color: white; border-color: #111827; }
+.playBtn { border-style: dashed; }
+.danger { border-color: #fecaca; background: #fff1f2; }
+
+.hint { margin-top: 10px; font-weight: 700; }
+.small { font-size: 12px; color: #6b7280; font-weight: 500; line-height: 1.4; }
+.badge { display: inline-block; padding: 3px 8px; border-radius: 999px; border: 1px solid #e5e7eb; font-size: 12px; color: #374151; background: #fff; }
+
+textarea {
+  width: 100%;
+  min-height: 110px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  padding: 10px 12px;
+  font-size: 16px;
+  outline: none;
+}
+textarea:focus { border-color: #111827; }
+
+.kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.live { color: #6b7280; }
+.final { color: #111827; font-weight: 800; }
+.note { margin-top: 10px; padding: 10px 12px; border: 1px dashed #d1d5db; border-radius: 12px; background: #fff; }
+
+.sectionTitle { font-weight: 900; font-size: 18px; display:flex; gap:10px; align-items:center; }
+.sectionDesc { margin-top: 4px; color:#6b7280; font-size: 12px; line-height:1.5; }
+.hr { height:1px; background:#e5e7eb; margin: 10px 0; border:0; }
+
+.quizPromptSm {
+  font-size: 40px;
+  font-weight: 900;
+  text-align: center;
+  margin: 8px 0 4px;
+  word-break: break-word;
+}
+.quizSubSm { text-align:center; color:#6b7280; font-size: 13px; margin-bottom: 8px; }
+
+.kpi { font-size: 18px; font-weight: 900; }
+</style>
 </head>
+
 <body>
-  <h1>TM Learning</h1>
-  <div class="muted">資料來源：<span class="mono">index.json</span>（教材 decks + 日文小遊戲題庫）</div>
+<div class="header">
+  <div class="title">guide – Japanese helper <span class="badge">聽力 + 語音辨識 + 小測驗遊戲</span></div>
+</div>
 
-  <div id="status" class="section card">
-    <div class="row">
-      <span class="pill">Status</span>
-      <span id="statusText" class="muted">載入中…</span>
-      <button id="reloadBtn" style="margin-left:auto;">重新載入</button>
+<div class="main">
+  <div class="grid">
+
+    <!-- 左側：50音測驗 -->
+    <div class="card">
+      <div class="row">
+        <div class="group">
+          <div class="label">文字系統</div>
+          <div class="seg">
+            <button id="hiraBtn" class="active">平假名</button>
+            <button id="kataBtn">片假名</button>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="label">模式</div>
+          <div class="seg">
+            <button id="k2rBtn" class="active">假名→發音</button>
+            <button id="r2kBtn">發音→假名</button>
+            <button id="l2kBtn">聽力→假名</button>
+          </div>
+          <div class="small">聽力模式用瀏覽器 TTS 播放「假名」</div>
+        </div>
+
+        <div class="group">
+          <div class="label">分數</div>
+          <div id="scoreBox" class="kpi">0 / 0</div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div id="prompt" class="prompt">あ</div>
+        <div id="subprompt" class="subprompt"></div>
+        <div id="choices" class="choices"></div>
+
+        <div class="actions">
+          <button id="playBtn" class="playBtn">🔊 播放</button>
+          <button id="nextBtn" class="primary">下一題</button>
+          <button id="resetBtn" class="ghost">重置分數</button>
+        </div>
+
+        <div id="hint" class="hint"></div>
+      </div>
     </div>
-    <div id="statusDetail" class="muted" style="margin-top:8px;"></div>
+
+    <!-- 右側：語音辨識 -->
+    <div class="card">
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div>
+          <div style="font-weight:800; font-size:18px;">🎤 語音讀入 → 日文文字</div>
+          <div class="small">
+            使用 <span class="kbd">SpeechRecognition</span>（Chrome/Edge 最穩）。
+            iOS Safari 可能不支援。
+          </div>
+        </div>
+        <div class="badge" id="srStatus">狀態：未啟動</div>
+      </div>
+
+      <div class="actions">
+        <button id="srStartBtn" class="primary">開始錄音</button>
+        <button id="srStopBtn" class="ghost" disabled>停止</button>
+        <button id="srClearBtn" class="danger">清除</button>
+        <button id="srSpeakBtn" class="playBtn">🔊 把結果唸出來</button>
+      </div>
+
+      <div class="note">
+        <div class="small">即時辨識（interim）：<span class="live" id="srLive">（空）</span></div>
+        <div class="small">最終結果（final）：<span class="final" id="srFinal">（空）</span></div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <div class="label">你也可以手動貼上/修正：</div>
+        <textarea id="srText" placeholder="辨識結果會同步到這裡，你也可以自己修改…"></textarea>
+      </div>
+
+      <div class="note small">
+        建議：你可以唸短句，例如「わたしは きんもん に すんでいます」，看看辨識是否轉成「私は金門に住んでいます」之類的文字。
+      </div>
+    </div>
+
   </div>
 
-  <div class="grid2 section">
-    <!-- Left: Search -->
-    <section class="card">
-      <div class="row">
-        <h2 style="margin:0;">教材查詢</h2>
-        <span class="pill" id="countPill">0 sentences</span>
+  <!-- 問候語小測驗 -->
+  <div class="card" style="margin-top:12px;">
+    <div class="sectionTitle">🧩 問候語小測驗（中⇄日） <span class="badge">可擴充</span></div>
+    <div class="sectionDesc">
+      遊戲玩法：每題四選一，可切換「中文→選日文」或「日文→選中文」。可選擇是否播放日文（題目/正解）。
+    </div>
+    <hr class="hr" />
+
+    <div class="row">
+      <div class="group">
+        <div class="label">方向</div>
+        <div class="seg">
+          <button id="greetC2JBtn" class="active">中文 → 選日文</button>
+          <button id="greetJ2CBtn">日文 → 選中文</button>
+        </div>
       </div>
 
-      <div class="row section">
-        <input id="q" type="text" placeholder="輸入關鍵字（支援英文/中文）" style="flex:1; min-width:260px;" />
-        <select id="deckFilter" title="Deck 篩選">
-          <option value="ALL">全部 decks</option>
-        </select>
-        <button id="searchBtn">搜尋</button>
-        <button id="clearBtn">清除</button>
+      <div class="group">
+        <div class="label">發音</div>
+        <div class="seg">
+          <button id="greetTTSOffBtn" class="active">不播放</button>
+          <button id="greetTTSOnBtn">播放日文</button>
+        </div>
+        <div class="small">播放內容：題目若為日文就播題目；題目為中文就播放正確日文</div>
       </div>
 
-      <div id="searchHint" class="muted section">提示：會在所有 decks/slides 的 <span class="mono">sentences</span> 內搜尋。</div>
-      <ul id="results" class="list"></ul>
-    </section>
+      <div class="group">
+        <div class="label">分數</div>
+        <div id="greetScore" class="kpi">0 / 0</div>
+      </div>
+    </div>
 
-    <!-- Right: Slide Viewer -->
-    <section class="card">
-      <div class="row">
-        <h2 style="margin:0;">投影片瀏覽</h2>
-        <span class="pill" id="slidePill">-</span>
+    <div style="margin-top:10px;">
+      <div id="greetPrompt" class="quizPromptSm">（載入中…）</div>
+      <div id="greetSub" class="quizSubSm">請選出正確對應</div>
+      <div id="greetChoices" class="choices"></div>
+
+      <div class="actions">
+        <button id="greetPlayBtn" class="playBtn">🔊 播放</button>
+        <button id="greetNextBtn" class="primary">下一題</button>
+        <button id="greetResetBtn" class="ghost">重置分數</button>
       </div>
 
-      <div class="row section">
-        <select id="deckSel" style="flex:1; min-width:280px;">
-          <option value="">選擇 deck…</option>
-        </select>
-        <select id="slideSel" style="min-width:160px;">
-          <option value="">選擇 slide…</option>
-        </select>
-      </div>
-
-      <div id="slideTitle" class="section" style="font-weight:700;"></div>
-      <div id="slideMeta" class="muted"></div>
-      <ul id="slideSentences" class="list"></ul>
-    </section>
+      <div id="greetHint" class="hint"></div>
+    </div>
   </div>
 
-  <!-- Game -->
-  <section class="card section" id="jpGame">
+  <!-- 單字小測驗 -->
+  <div class="card" style="margin-top:12px;">
+    <div class="sectionTitle">🧩 單字小測驗（中⇄日） <span class="badge">可擴充</span></div>
+    <div class="sectionDesc">
+      遊戲玩法同上。你未來要加更多單字，只要把資料加入 JSON 即可。
+    </div>
+    <hr class="hr" />
+
     <div class="row">
-      <h2 style="margin:0;">日文用法小遊戲</h2>
-      <div class="row" style="margin-left:auto;">
-        <label class="muted">關卡</label>
-        <select id="jpGroup">
-          <option value="ALL">全部</option>
-        </select>
-        <button id="jpStart">開始</button>
-        <button id="jpNext" disabled>下一題</button>
+      <div class="group">
+        <div class="label">方向</div>
+        <div class="seg">
+          <button id="wordC2JBtn" class="active">中文 → 選日文</button>
+          <button id="wordJ2CBtn">日文 → 選中文</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label">發音</div>
+        <div class="seg">
+          <button id="wordTTSOffBtn" class="active">不播放</button>
+          <button id="wordTTSOnBtn">播放日文</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label">分數</div>
+        <div id="wordScore" class="kpi">0 / 0</div>
       </div>
     </div>
 
-    <div class="row section muted" style="gap:16px;">
-      <div>分數：<b id="jpScore">0</b></div>
-      <div>連續答對：<b id="jpStreak">0</b></div>
-      <div>題號：<b id="jpIdx">-</b></div>
-    </div>
+    <div style="margin-top:10px;">
+      <div id="wordPrompt" class="quizPromptSm">（載入中…）</div>
+      <div id="wordSub" class="quizSubSm">請選出正確對應</div>
+      <div id="wordChoices" class="choices"></div>
 
-    <div id="jpCard" class="section" style="padding:14px; border-radius:12px; background:var(--bg);">
-      <div class="muted">按「開始」出題</div>
+      <div class="actions">
+        <button id="wordPlayBtn" class="playBtn">🔊 播放</button>
+        <button id="wordNextBtn" class="primary">下一題</button>
+        <button id="wordResetBtn" class="ghost">重置分數</button>
+      </div>
+
+      <div id="wordHint" class="hint"></div>
     </div>
-  </section>
+  </div>
+
+</div>
 
 <script>
-(() => {
-  // -------------------------
-  // Data loading
-  // -------------------------
-  const $ = (id) => document.getElementById(id);
+/* ============================================================
+   共用工具
+============================================================ */
+function rand(n){ return Math.floor(Math.random()*n); }
+function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
+function uniqPush(arr, v){ if(!arr.includes(v)) arr.push(v); }
 
-  const state = {
-    data: null,
-    sentenceIndex: [], // {deckIdx, slideIdx, deckName, slideNo, title, sentence}
-    jpBank: [],
-    jpGroups: [],
-    jp: { order: [], cursor: 0, score: 0, streak: 0, current: null, locked: false }
+/* ============================================================
+   TTS：唸日文（假名/日文句子）
+============================================================ */
+function speakJP(text){
+  if(!("speechSynthesis" in window)) {
+    alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
+    return;
+  }
+  window.speechSynthesis.cancel();
+
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ja-JP";
+  u.rate = 0.9;
+  u.pitch = 1.0;
+
+  const voices = window.speechSynthesis.getVoices?.() || [];
+  const jp = voices.find(v => (v.lang || "").toLowerCase().startsWith("ja"));
+  if(jp) u.voice = jp;
+
+  window.speechSynthesis.speak(u);
+}
+if("speechSynthesis" in window){
+  window.speechSynthesis.onvoiceschanged = () => {};
+}
+
+/* ============================================================
+   50音測驗（原本功能保留）
+============================================================ */
+const KANA = [
+["あ","ア","a"],["い","イ","i"],["う","ウ","u"],["え","エ","e"],["お","オ","o"],
+["か","カ","ka"],["き","キ","ki"],["く","ク","ku"],["け","ケ","ke"],["こ","コ","ko"],
+["さ","サ","sa"],["し","シ","shi"],["す","ス","su"],["せ","セ","se"],["そ","ソ","so"],
+["た","タ","ta"],["ち","チ","chi"],["つ","ツ","tsu"],["て","テ","te"],["と","ト","to"],
+["な","ナ","na"],["に","ニ","ni"],["ぬ","ヌ","nu"],["ね","ネ","ne"],["の","ノ","no"],
+["は","ハ","ha"],["ひ","ヒ","hi"],["ふ","フ","fu"],["へ","ヘ","he"],["ほ","ホ","ho"],
+["ま","マ","ma"],["み","ミ","mi"],["む","ム","mu"],["め","メ","me"],["も","モ","mo"],
+["や","ヤ","ya"],["ゆ","ユ","yu"],["よ","ヨ","yo"],
+["ら","ラ","ra"],["り","リ","ri"],["る","ル","ru"],["れ","レ","re"],["ろ","ロ","ro"],
+["わ","ワ","wa"],["を","ヲ","wo"],
+["ん","ン","n"]
+];
+
+let script = "hira"; // hira | kata
+let mode = "k2r";    // k2r | r2k | l2k
+let current;
+let correct;
+let score = { c:0, t:0 };
+let revealed = false;
+
+function kanaLabel(item){ return script==="hira" ? item[0] : item[1]; }
+
+function updateScore(){
+  document.getElementById("scoreBox").textContent = `${score.c} / ${score.t}`;
+}
+
+function renderKanaChoices(arr){
+  const box=document.getElementById("choices");
+  box.innerHTML="";
+
+  arr.forEach(v=>{
+    const b=document.createElement("button");
+    b.className="choice";
+    b.textContent=v;
+
+    b.onclick=()=>{
+      if(revealed) return;
+      revealed=true;
+
+      score.t++;
+      if(v===correct){
+        score.c++;
+        b.classList.add("correct");
+      }else{
+        b.classList.add("wrong");
+      }
+
+      updateScore();
+      document.getElementById("hint").textContent =
+        `正解：${correct}（${current[0]} / ${current[1]} = ${current[2]}）`;
+    };
+
+    box.appendChild(b);
+  });
+}
+
+function newQuestion(){
+  revealed = false;
+  document.getElementById("hint").textContent = "";
+
+  current = KANA[rand(KANA.length)];
+  const [h,k,r] = current;
+
+  const promptEl = document.getElementById("prompt");
+  const subEl = document.getElementById("subprompt");
+
+  if(mode==="k2r"){
+    promptEl.textContent = kanaLabel(current);
+    subEl.textContent = "請選擇正確的 romaji 發音";
+    correct = r;
+
+    let opts=[r];
+    while(opts.length<4){
+      const rr = KANA[rand(KANA.length)][2];
+      uniqPush(opts, rr);
+    }
+    renderKanaChoices(shuffle(opts));
+
+  } else if(mode==="r2k"){
+    promptEl.textContent = r;
+    subEl.textContent = "請選擇正確的假名";
+    correct = kanaLabel(current);
+
+    let opts=[correct];
+    while(opts.length<4){
+      const kk2 = script==="hira"
+        ? KANA[rand(KANA.length)][0]
+        : KANA[rand(KANA.length)][1];
+      uniqPush(opts, kk2);
+    }
+    renderKanaChoices(shuffle(opts));
+
+  } else { // l2k
+    promptEl.textContent = "🔊";
+    subEl.textContent = "按播放聽發音，選出正確假名（可重播）";
+    correct = kanaLabel(current);
+
+    let opts=[correct];
+    while(opts.length<4){
+      const kk2 = script==="hira"
+        ? KANA[rand(KANA.length)][0]
+        : KANA[rand(KANA.length)][1];
+      uniqPush(opts, kk2);
+    }
+    renderKanaChoices(shuffle(opts));
+    setTimeout(()=> speakJP(kanaLabel(current)), 120);
+  }
+}
+
+// UI events (50音)
+const hiraBtn = document.getElementById("hiraBtn");
+const kataBtn = document.getElementById("kataBtn");
+const k2rBtn  = document.getElementById("k2rBtn");
+const r2kBtn  = document.getElementById("r2kBtn");
+const l2kBtn  = document.getElementById("l2kBtn");
+
+hiraBtn.onclick=()=>{
+  script="hira";
+  hiraBtn.classList.add("active");
+  kataBtn.classList.remove("active");
+  newQuestion();
+};
+kataBtn.onclick=()=>{
+  script="kata";
+  kataBtn.classList.add("active");
+  hiraBtn.classList.remove("active");
+  newQuestion();
+};
+k2rBtn.onclick=()=>{
+  mode="k2r";
+  k2rBtn.classList.add("active");
+  r2kBtn.classList.remove("active");
+  l2kBtn.classList.remove("active");
+  newQuestion();
+};
+r2kBtn.onclick=()=>{
+  mode="r2k";
+  r2kBtn.classList.add("active");
+  k2rBtn.classList.remove("active");
+  l2kBtn.classList.remove("active");
+  newQuestion();
+};
+l2kBtn.onclick=()=>{
+  mode="l2k";
+  l2kBtn.classList.add("active");
+  k2rBtn.classList.remove("active");
+  r2kBtn.classList.remove("active");
+  newQuestion();
+};
+
+document.getElementById("nextBtn").onclick=()=>newQuestion();
+document.getElementById("resetBtn").onclick=()=>{
+  score={c:0,t:0};
+  updateScore();
+  newQuestion();
+};
+document.getElementById("playBtn").onclick=()=>{
+  if(!current) return;
+  speakJP(kanaLabel(current));
+};
+
+/* ============================================================
+   語音辨識（SpeechRecognition）
+============================================================ */
+const srStatus = document.getElementById("srStatus");
+const srStartBtn = document.getElementById("srStartBtn");
+const srStopBtn  = document.getElementById("srStopBtn");
+const srClearBtn = document.getElementById("srClearBtn");
+const srSpeakBtn = document.getElementById("srSpeakBtn");
+
+const srLiveEl  = document.getElementById("srLive");
+const srFinalEl = document.getElementById("srFinal");
+const srText    = document.getElementById("srText");
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recog = null;
+let recognizing = false;
+
+function setSRStatus(text){
+  srStatus.textContent = `狀態：${text}`;
+}
+
+function ensureRecognition(){
+  if(!SpeechRecognition){
+    setSRStatus("不支援（建議 Chrome/Edge）");
+    alert("此瀏覽器不支援 SpeechRecognition（語音辨識）。建議用 Chrome / Edge 桌機或 Android。iOS Safari 通常不支援。");
+    return null;
+  }
+  if(recog) return recog;
+
+  recog = new SpeechRecognition();
+  recog.lang = "ja-JP";
+  recog.interimResults = true;
+  recog.continuous = true;
+
+  recog.onstart = () => {
+    recognizing = true;
+    setSRStatus("錄音中…");
+    srStartBtn.disabled = true;
+    srStopBtn.disabled = false;
   };
 
-  function setStatus(text, detail = "", isError = false){
-    $("statusText").textContent = text;
-    $("statusText").style.color = isError ? "#c62828" : "#666";
-    $("statusDetail").textContent = detail || "";
-  }
+  recog.onend = () => {
+    recognizing = false;
+    setSRStatus("已停止");
+    srStartBtn.disabled = false;
+    srStopBtn.disabled = true;
+  };
 
-  function safeText(v){
-    if (v === null || v === undefined) return "";
-    return String(v);
-  }
+  recog.onerror = (e) => {
+    setSRStatus("錯誤：" + (e.error || "unknown"));
+  };
 
-  function flattenSentences(data){
-    const idx = [];
-    const decks = Array.isArray(data?.decks) ? data.decks : [];
-    decks.forEach((deck, di) => {
-      const deckName = safeText(deck.source_file || `deck_${di+1}`);
-      const slides = Array.isArray(deck.slides) ? deck.slides : [];
-      slides.forEach((s, si) => {
-        const slideNo = s.slide ?? (si+1);
-        const title = safeText(s.title_guess || "");
-        const sentences = Array.isArray(s.sentences) ? s.sentences : [];
-        sentences.forEach((line) => {
-          if (!line) return;
-          idx.push({
-            deckIdx: di,
-            slideIdx: si,
-            deckName,
-            slideNo,
-            title,
-            sentence: safeText(line)
-          });
-        });
-      });
-    });
-    return idx;
-  }
+  recog.onresult = (event) => {
+    let interim = "";
+    let finalText = srFinalEl.textContent === "（空）" ? "" : srFinalEl.textContent;
 
-  function buildDeckOptions(){
-    const decks = state.data.decks || [];
-    const deckSel = $("deckSel");
-    const deckFilter = $("deckFilter");
-    deckSel.innerHTML = `<option value="">選擇 deck…</option>`;
-    deckFilter.innerHTML = `<option value="ALL">全部 decks</option>`;
-
-    decks.forEach((d, i) => {
-      const name = safeText(d.source_file || `deck_${i+1}`);
-      const opt1 = document.createElement("option");
-      opt1.value = String(i);
-      opt1.textContent = name;
-      deckSel.appendChild(opt1);
-
-      const opt2 = document.createElement("option");
-      opt2.value = String(i);
-      opt2.textContent = name;
-      deckFilter.appendChild(opt2);
-    });
-  }
-
-  function buildSlideOptions(deckIdx){
-    const slideSel = $("slideSel");
-    slideSel.innerHTML = `<option value="">選擇 slide…</option>`;
-    if (deckIdx === "" || deckIdx === null || deckIdx === undefined) return;
-
-    const deck = state.data.decks[Number(deckIdx)];
-    const slides = Array.isArray(deck?.slides) ? deck.slides : [];
-    slides.forEach((s, si) => {
-      const slideNo = s.slide ?? (si+1);
-      const opt = document.createElement("option");
-      opt.value = String(si);
-      opt.textContent = `Slide ${slideNo}`;
-      slideSel.appendChild(opt);
-    });
-  }
-
-  function renderSlide(deckIdx, slideIdx){
-    const decks = state.data.decks || [];
-    const deck = decks[Number(deckIdx)];
-    const slides = deck?.slides || [];
-    const s = slides[Number(slideIdx)];
-    if (!s) {
-      $("slideTitle").textContent = "";
-      $("slideMeta").textContent = "";
-      $("slideSentences").innerHTML = "";
-      $("slidePill").textContent = "-";
-      return;
-    }
-
-    const deckName = safeText(deck.source_file || "");
-    const slideNo = s.slide ?? (Number(slideIdx)+1);
-    const title = safeText(s.title_guess || "");
-    const sentences = Array.isArray(s.sentences) ? s.sentences : [];
-
-    $("slidePill").textContent = `${deckName} / Slide ${slideNo}`;
-    $("slideTitle").textContent = title ? title : "(no title_guess)";
-    $("slideMeta").textContent = `sentences: ${sentences.length}`;
-
-    $("slideSentences").innerHTML = sentences.map(t => `
-      <li>
-        <div>${escapeHtml(safeText(t))}</div>
-      </li>
-    `).join("");
-  }
-
-  function escapeHtml(str){
-    return String(str)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  // -------------------------
-  // Search
-  // -------------------------
-  function doSearch(){
-    const q = $("q").value.trim().toLowerCase();
-    const deckFilterVal = $("deckFilter").value;
-
-    const results = [];
-    if (!q){
-      $("results").innerHTML = `<li class="muted">請先輸入關鍵字。</li>`;
-      return;
-    }
-
-    for (const row of state.sentenceIndex){
-      if (deckFilterVal !== "ALL" && String(row.deckIdx) !== deckFilterVal) continue;
-      if (row.sentence.toLowerCase().includes(q)){
-        results.push(row);
-        if (results.length >= 80) break; // 避免爆量（可自行調整）
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const res = event.results[i];
+      const txt = res[0].transcript;
+      if(res.isFinal){
+        finalText += (finalText ? " " : "") + txt.trim();
+      } else {
+        interim += txt;
       }
     }
 
-    if (!results.length){
-      $("results").innerHTML = `<li class="muted">沒有找到符合的句子。</li>`;
+    srLiveEl.textContent = interim ? interim : "（空）";
+    srFinalEl.textContent = finalText ? finalText : "（空）";
+    srText.value = finalText;
+  };
+
+  return recog;
+}
+
+srStartBtn.onclick = () => {
+  const r = ensureRecognition();
+  if(!r) return;
+  try { r.start(); } catch(_) {}
+};
+
+srStopBtn.onclick = () => {
+  if(recog && recognizing){
+    recog.stop();
+  }
+};
+
+srClearBtn.onclick = () => {
+  srLiveEl.textContent = "（空）";
+  srFinalEl.textContent = "（空）";
+  srText.value = "";
+};
+
+srSpeakBtn.onclick = () => {
+  const t = (srText.value || "").trim();
+  if(!t){
+    alert("目前沒有辨識結果可播放。");
+    return;
+  }
+  speakJP(t);
+};
+
+srText.addEventListener("input", () => {
+  const t = srText.value.trim();
+  srFinalEl.textContent = t ? t : "（空）";
+});
+
+/* ============================================================
+   新增：中⇄日 小測驗遊戲（可重用）
+   - bank: [{ zh, ja }]
+============================================================ */
+function createBilingualQuiz(opts){
+  const {
+    bank,
+    ids,                // {prompt, sub, choices, score, hint}
+    btns,               // {dirA, dirB, ttsOff, ttsOn, play, next, reset}
+    defaultDirection,   // "C2J" | "J2C"
+    titleForHint
+  } = opts;
+
+  let direction = defaultDirection || "C2J";
+  let ttsEnabled = false;
+  let q = null;
+  let correct = null;
+  let revealed = false;
+  let score = { c:0, t:0 };
+
+  function setScore(){
+    document.getElementById(ids.score).textContent = `${score.c} / ${score.t}`;
+  }
+
+  function setHint(text){ document.getElementById(ids.hint).textContent = text || ""; }
+
+  function getPromptText(item){
+    return direction === "C2J" ? item.zh : item.ja;
+  }
+  function getCorrectText(item){
+    return direction === "C2J" ? item.ja : item.zh;
+  }
+
+  function pickWrongChoices(item, n){
+    const pool = bank.filter(x => x !== item);
+    const out = [];
+    while(out.length < n && pool.length > 0){
+      const pick = pool.splice(rand(pool.length), 1)[0];
+      out.push(getCorrectText(pick));
+    }
+    return out;
+  }
+
+  function renderChoices(choicesArr){
+    const box = document.getElementById(ids.choices);
+    box.innerHTML = "";
+    choicesArr.forEach(v=>{
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.textContent = v;
+
+      b.onclick = () => {
+        if(revealed) return;
+        revealed = true;
+
+        score.t++;
+        if(v === correct){
+          score.c++;
+          b.classList.add("correct");
+        } else {
+          b.classList.add("wrong");
+        }
+        setScore();
+
+        setHint(`正解：${correct}（${titleForHint}：${q.zh} ⇄ ${q.ja}）`);
+
+        if(ttsEnabled){
+          speakJP(q.ja);
+        }
+      };
+
+      box.appendChild(b);
+    });
+  }
+
+  function maybePlayForQuestion(){
+    if(!ttsEnabled || !q) return;
+    // 規則：永遠播放「正確日文」
+    speakJP(q.ja);
+  }
+
+  function newQ(){
+    if(!bank || bank.length < 4){
+      document.getElementById(ids.prompt).textContent = "（資料不足，至少需要 4 筆）";
+      document.getElementById(ids.sub).textContent = "請先在 JSON 增加資料";
+      document.getElementById(ids.choices).innerHTML = "";
+      setHint("");
       return;
     }
 
-    $("results").innerHTML = results.map(r => `
-      <li>
-        <div class="muted" style="margin-bottom:4px;">
-          <span class="pill">${escapeHtml(r.deckName)}</span>
-          <span class="pill">Slide ${escapeHtml(r.slideNo)}</span>
-          ${r.title ? `<span class="pill">${escapeHtml(r.title.slice(0,60))}${r.title.length>60?"…":""}</span>` : ""}
-        </div>
-        <div>${escapeHtml(r.sentence)}</div>
-        <div class="row" style="margin-top:8px;">
-          <button data-jump="${r.deckIdx}:${r.slideIdx}">跳到此 slide</button>
-        </div>
-      </li>
-    `).join("");
+    revealed = false;
+    setHint("");
 
-    // Jump handlers
-    $("results").querySelectorAll("button[data-jump]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const [di, si] = btn.dataset.jump.split(":").map(Number);
-        $("deckSel").value = String(di);
-        buildSlideOptions(di);
-        $("slideSel").value = String(si);
-        renderSlide(di, si);
-        window.scrollTo({ top: $("jpGame").offsetTop - 20, behavior: "smooth" });
-      });
-    });
+    q = bank[rand(bank.length)];
+    document.getElementById(ids.prompt).textContent = getPromptText(q);
+    document.getElementById(ids.sub).textContent = "請選出正確對應";
+
+    correct = getCorrectText(q);
+
+    const wrong = pickWrongChoices(q, 3);
+    const choices = shuffle([correct, ...wrong]);
+    renderChoices(choices);
+
+    setTimeout(()=> maybePlayForQuestion(), 100);
   }
 
-  // -------------------------
-  // JP Game
-  // -------------------------
-  function shuffle(a){
-    const x = a.slice();
-    for (let i=x.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [x[i],x[j]]=[x[j],x[i]];
-    }
-    return x;
+  // buttons
+  document.getElementById(btns.dirA).onclick = () => {
+    direction = "C2J";
+    document.getElementById(btns.dirA).classList.add("active");
+    document.getElementById(btns.dirB).classList.remove("active");
+    newQ();
+  };
+  document.getElementById(btns.dirB).onclick = () => {
+    direction = "J2C";
+    document.getElementById(btns.dirB).classList.add("active");
+    document.getElementById(btns.dirA).classList.remove("active");
+    newQ();
+  };
+
+  document.getElementById(btns.ttsOff).onclick = () => {
+    ttsEnabled = false;
+    document.getElementById(btns.ttsOff).classList.add("active");
+    document.getElementById(btns.ttsOn).classList.remove("active");
+  };
+  document.getElementById(btns.ttsOn).onclick = () => {
+    ttsEnabled = true;
+    document.getElementById(btns.ttsOn).classList.add("active");
+    document.getElementById(btns.ttsOff).classList.remove("active");
+    if(q) speakJP(q.ja);
+  };
+
+  document.getElementById(btns.play).onclick = () => {
+    if(!q) return;
+    speakJP(q.ja);
+  };
+  document.getElementById(btns.next).onclick = () => newQ();
+  document.getElementById(btns.reset).onclick = () => {
+    score = { c:0, t:0 };
+    setScore();
+    newQ();
+  };
+
+  // init state
+  if(defaultDirection === "J2C"){
+    direction = "J2C";
+    document.getElementById(btns.dirB).classList.add("active");
+    document.getElementById(btns.dirA).classList.remove("active");
   }
+  setScore();
+  newQ();
 
-  function buildJpGroupOptions(){
-    const sel = $("jpGroup");
-    sel.innerHTML = `<option value="ALL">全部</option>`;
-    state.jpGroups.forEach(g => {
-      const opt = document.createElement("option");
-      opt.value = g;
-      opt.textContent = g;
-      sel.appendChild(opt);
-    });
+  return {
+    addItem: (zh, ja) => bank.push({ zh, ja }),
+    getState: () => ({ direction, ttsEnabled, score })
+  };
+}
+
+/* ============================================================
+   從 JSON 載入題庫資料（保留所有功能）
+============================================================ */
+async function loadGuideData(){
+  const res = await fetch("./guide_data.json", { cache: "no-store" });
+  if(!res.ok) throw new Error("HTTP " + res.status);
+  const data = await res.json();
+
+  const greetings = data?.banks?.greetings;
+  const words = data?.banks?.words;
+
+  if(!Array.isArray(greetings) || !Array.isArray(words)){
+    throw new Error("JSON 結構錯誤：找不到 banks.greetings 或 banks.words");
   }
+  return { greetings, words, meta: data };
+}
 
-  function jpFilterBank(group){
-    const bank = Array.isArray(state.jpBank) ? state.jpBank : [];
-    if (group === "ALL") return bank;
-    return bank.filter(q => q.group === group);
-  }
+/* ============================================================
+   啟動：問候語 / 單字 小測驗（改為 JSON 載入）
+============================================================ */
+let greetingQuiz = null;
+let wordQuiz = null;
 
-  function jpRenderQuestion(){
-    const card = $("jpCard");
-    $("jpNext").disabled = true;
-    state.jp.locked = false;
+async function initBilingualQuizzes(){
+  try{
+    const { greetings, words } = await loadGuideData();
 
-    if (state.jp.cursor >= state.jp.order.length){
-      $("jpIdx").textContent = "-";
-      card.innerHTML = `
-        <div style="font-weight:800;">本輪結束！</div>
-        <div class="muted" style="margin-top:6px;">總分：<b>${state.jp.score}</b>｜連續答對：<b>${state.jp.streak}</b></div>
-        <div class="muted" style="margin-top:10px;">可換關卡或再按「開始」重玩。</div>
-      `;
-      return;
-    }
-
-    const q = state.jp.current = state.jpBankFiltered[state.jp.order[state.jp.cursor]];
-    $("jpIdx").textContent = `${state.jp.cursor+1}/${state.jp.order.length}`;
-
-    const choicesHtml = (q.choices_ja || []).map((c, idx) => `
-      <button class="choiceBtn" data-idx="${idx}">${escapeHtml(c)}</button>
-    `).join("");
-
-    card.innerHTML = `
-      <div style="font-weight:700;">題目（中文）</div>
-      <div style="margin-top:6px;">${escapeHtml(q.prompt_zh || "")}</div>
-      <div class="muted" style="margin-top:10px;">選擇最正確的日文：</div>
-      <div style="margin-top:6px;">${choicesHtml}</div>
-      <div id="jpFb" class="muted" style="margin-top:10px;"></div>
-    `;
-
-    card.querySelectorAll(".choiceBtn").forEach(btn => {
-      btn.addEventListener("click", () => jpChoose(btn));
-    });
-  }
-
-  function jpStart(){
-    const group = $("jpGroup").value;
-    const bankFiltered = jpFilterBank(group);
-
-    if (!bankFiltered.length){
-      $("jpCard").innerHTML = `<div style="color:var(--bad); font-weight:800;">此關卡沒有題目，請先在 index.json 補上 jp_usage_game_bank。</div>`;
-      return;
-    }
-
-    state.jpBankFiltered = bankFiltered;
-    state.jp.order = shuffle([...Array(bankFiltered.length).keys()]);
-    state.jp.cursor = 0;
-    state.jp.score = 0;
-    state.jp.streak = 0;
-    $("jpScore").textContent = "0";
-    $("jpStreak").textContent = "0";
-    jpRenderQuestion();
-  }
-
-  function jpChoose(btn){
-    if (state.jp.locked) return;
-    state.jp.locked = true;
-
-    const q = state.jp.current;
-    const idx = Number(btn.dataset.idx);
-    const ok = idx === Number(q.answer_index);
-    const fb = $("jpFb");
-    const all = $("jpCard").querySelectorAll(".choiceBtn");
-
-    all.forEach(b => b.disabled = true);
-
-    all.forEach(b => {
-      const bi = Number(b.dataset.idx);
-      if (bi === Number(q.answer_index)) b.classList.add("good");
-      else if (bi === idx && !ok) b.classList.add("bad");
-      else b.style.opacity = "0.85";
+    greetingQuiz = createBilingualQuiz({
+      bank: greetings,
+      ids: {
+        prompt: "greetPrompt",
+        sub: "greetSub",
+        choices: "greetChoices",
+        score: "greetScore",
+        hint: "greetHint"
+      },
+      btns: {
+        dirA: "greetC2JBtn",
+        dirB: "greetJ2CBtn",
+        ttsOff: "greetTTSOffBtn",
+        ttsOn: "greetTTSOnBtn",
+        play: "greetPlayBtn",
+        next: "greetNextBtn",
+        reset: "greetResetBtn"
+      },
+      defaultDirection: "C2J",
+      titleForHint: "對應"
     });
 
-    if (ok){
-      state.jp.score += 10;
-      state.jp.streak += 1;
-      fb.innerHTML = `<span style="color:var(--ok); font-weight:800;">✅ 正確！+10</span><div style="margin-top:6px;">${escapeHtml(q.explain_zh || "")}</div>`;
-    } else {
-      state.jp.streak = 0;
-      fb.innerHTML = `<span style="color:var(--bad); font-weight:800;">❌ 錯誤</span><div style="margin-top:6px;">${escapeHtml(q.explain_zh || "")}</div>`;
-    }
+    wordQuiz = createBilingualQuiz({
+      bank: words,
+      ids: {
+        prompt: "wordPrompt",
+        sub: "wordSub",
+        choices: "wordChoices",
+        score: "wordScore",
+        hint: "wordHint"
+      },
+      btns: {
+        dirA: "wordC2JBtn",
+        dirB: "wordJ2CBtn",
+        ttsOff: "wordTTSOffBtn",
+        ttsOn: "wordTTSOnBtn",
+        play: "wordPlayBtn",
+        next: "wordNextBtn",
+        reset: "wordResetBtn"
+      },
+      defaultDirection: "C2J",
+      titleForHint: "對應"
+    });
 
-    $("jpScore").textContent = String(state.jp.score);
-    $("jpStreak").textContent = String(state.jp.streak);
-    $("jpNext").disabled = false;
+  } catch(err){
+    console.error(err);
+    document.getElementById("greetPrompt").textContent = "（載入失敗）";
+    document.getElementById("greetSub").textContent = "請確認 guide_data.json 路徑與 JSON 格式";
+    document.getElementById("wordPrompt").textContent = "（載入失敗）";
+    document.getElementById("wordSub").textContent = "請確認 guide_data.json 路徑與 JSON 格式";
+
+    // 不影響 50 音/語音辨識：其他功能照用
+    alert("題庫 JSON 載入失敗：\n" + (err?.message || err));
   }
+}
 
-  function jpNext(){
-    state.jp.cursor += 1;
-    jpRenderQuestion();
-  }
-
-  // -------------------------
-  // Init
-  // -------------------------
-  async function load(){
-    try{
-      setStatus("載入中…", "正在讀取 index.json");
-      const url = `index.json?v=${Date.now()}`; // cache-bust
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      // Basic validation
-      if (!data || !Array.isArray(data.decks)) {
-        throw new Error("index.json 缺少 decks（或 decks 不是陣列）");
-      }
-
-      state.data = data;
-      state.sentenceIndex = flattenSentences(data);
-
-      // JP game bank
-      state.jpBank = Array.isArray(data.jp_usage_game_bank) ? data.jp_usage_game_bank : [];
-      state.jpGroups = [...new Set(state.jpBank.map(x => x.group).filter(Boolean))].sort();
-
-      $("countPill").textContent = `${state.sentenceIndex.length} sentences`;
-
-      buildDeckOptions();
-      buildJpGroupOptions();
-
-      setStatus("載入完成", `decks: ${data.decks.length}｜sentences: ${state.sentenceIndex.length}｜jp questions: ${state.jpBank.length}`);
-    } catch (e){
-      console.error(e);
-      setStatus("載入失敗", String(e?.message || e), true);
-    }
-  }
-
-  // UI hooks
-  $("reloadBtn").addEventListener("click", load);
-  $("searchBtn").addEventListener("click", doSearch);
-  $("clearBtn").addEventListener("click", () => { $("q").value=""; $("results").innerHTML=""; });
-  $("q").addEventListener("keydown", (ev) => { if (ev.key === "Enter") doSearch(); });
-
-  $("deckSel").addEventListener("change", () => {
-    const di = $("deckSel").value;
-    buildSlideOptions(di);
-    renderSlide(di, $("slideSel").value);
-  });
-  $("slideSel").addEventListener("change", () => {
-    renderSlide($("deckSel").value, $("slideSel").value);
-  });
-
-  $("jpStart").addEventListener("click", jpStart);
-  $("jpNext").addEventListener("click", jpNext);
-
-  // Start
-  load();
-})();
+/* ============================================================
+   初始化
+============================================================ */
+updateScore();
+newQuestion();
+setSRStatus(SpeechRecognition ? "未啟動" : "不支援");
+initBilingualQuizzes();
 </script>
 </body>
 </html>
