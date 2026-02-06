@@ -288,7 +288,73 @@ select:focus { border-color: #111827; }
       <div id="wordHint" class="hint"></div>
     </div>
   </div>
+    <!-- 新增：日文素材朗讀播放器 -->
+  <div class="card" style="margin-top:12px;">
+    <div class="sectionTitle">🎧 日文素材朗讀（從 JSON 自動抽取） <span class="badge">上班聽</span></div>
+    <div class="sectionDesc">
+      會從 <span class="kbd">guide_data.json</span> 自動抽出所有日文句子（含假名/漢字/片假名），組成播放清單並用瀏覽器 TTS 朗讀。
+    </div>
+    <hr class="hr" />
 
+    <div class="row">
+      <div class="group">
+        <div class="label">資料來源</div>
+        <div class="badge">guide_data.json</div>
+        <div class="small">請確保此檔與 index.html 同一層（或改 JS 的路徑）</div>
+      </div>
+
+      <div class="group">
+        <div class="label">語速</div>
+        <input id="jpRate" type="range" min="0.6" max="1.2" step="0.05" value="0.9" />
+        <div class="small">目前：<span id="jpRateVal">0.90</span></div>
+      </div>
+
+      <div class="group">
+        <div class="label">間隔（秒）</div>
+        <input id="jpGap" type="range" min="0" max="2" step="0.1" value="0.3" />
+        <div class="small">目前：<span id="jpGapVal">0.3</span>s</div>
+      </div>
+
+      <div class="group">
+        <div class="label">選項</div>
+        <div class="row" style="gap:8px;">
+          <label class="small"><input id="jpShuffle" type="checkbox" /> 隨機</label>
+          <label class="small"><input id="jpLoop" type="checkbox" checked /> 循環</label>
+          <label class="small"><input id="jpDedup" type="checkbox" checked /> 去重</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="jpLoadBtn" class="ghost">📥 重新載入素材</button>
+      <button id="jpPlayBtn" class="primary">▶️ 播放</button>
+      <button id="jpPauseBtn" class="ghost" disabled>⏸ 暫停</button>
+      <button id="jpStopBtn" class="danger" disabled>⏹ 停止</button>
+      <button id="jpPrevBtn" class="ghost" disabled>⏮ 上一則</button>
+      <button id="jpNextBtn" class="ghost" disabled>⏭ 下一則</button>
+      <button id="jpDownloadBtn" class="playBtn" disabled>⬇️ 下載清單</button>
+    </div>
+
+    <div class="note">
+      <div class="small">狀態：<span id="jpStatus" class="final">未載入</span></div>
+      <div class="small">進度：<span id="jpProgress" class="final">0 / 0</span></div>
+      <div class="small">正在朗讀：</div>
+      <div id="jpNow" class="final" style="font-size:18px; margin-top:6px;">（空）</div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <div class="label">素材預覽（最多顯示 80 筆）：</div>
+      <textarea id="jpPreview" readonly></textarea>
+    </div>
+
+    <div class="note small">
+      小提醒：iOS Safari 的語音與背景播放限制較多，桌面 Chrome/Edge 最穩。朗讀時請保持頁面開著。
+    </div>
+  </div>
+
+
+
+  
   <!-- ✅ 用法小測驗（題型版） -->
   <div class="card" style="margin-top:12px;">
     <div class="sectionTitle">🧩 用法小測驗（題型：填空 / 排序 / 判斷 / 四選一） <span class="badge">從 JSON 載入</span></div>
@@ -1136,6 +1202,393 @@ function fillSelect(sel, options){
     document.getElementById("gramSub").textContent = "請確認 guide_data.json 與路徑";
   }
 })();
+
+/* ============================================================
+   🎧 日文素材朗讀：從 guide_data.json 抽取所有日文文字 → 播放清單
+   - 不影響你原本功能
+============================================================ */
+(function setupJPReader(){
+  // 你 JSON 檔名若不同，改這裡
+  const DATA_URL = "guide_data.json";
+
+  const el = (id)=>document.getElementById(id);
+
+  const ui = {
+    loadBtn: el("jpLoadBtn"),
+    playBtn: el("jpPlayBtn"),
+    pauseBtn: el("jpPauseBtn"),
+    stopBtn: el("jpStopBtn"),
+    prevBtn: el("jpPrevBtn"),
+    nextBtn: el("jpNextBtn"),
+    downloadBtn: el("jpDownloadBtn"),
+    status: el("jpStatus"),
+    progress: el("jpProgress"),
+    now: el("jpNow"),
+    preview: el("jpPreview"),
+    rate: el("jpRate"),
+    rateVal: el("jpRateVal"),
+    gap: el("jpGap"),
+    gapVal: el("jpGapVal"),
+    shuffle: el("jpShuffle"),
+    loop: el("jpLoop"),
+    dedup: el("jpDedup")
+  };
+
+  // ---- 判斷「是不是日文」：包含平/片假名或漢字就算
+  const JP_RE = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/;
+
+  function looksJapanese(s){
+    if(!s) return false;
+    const t = String(s).trim();
+    if(t.length < 1) return false;
+    // 避免純英數或純符號
+    if(!JP_RE.test(t)) return false;
+    return true;
+  }
+
+  // ---- 長句切段：避免某些瀏覽器對 Utterance 太長會不唸
+  function splitJPText(text, maxLen=120){
+    const t = String(text).replace(/\s+/g, " ").trim();
+    if(t.length <= maxLen) return [t];
+
+    // 先用日文常見標點切
+    const chunks = [];
+    const parts = t.split(/(?<=[。！？!?、，,;；:：])\s*/);
+    let buf = "";
+    for(const p of parts){
+      if(!p) continue;
+      if((buf + p).length <= maxLen){
+        buf += p;
+      } else {
+        if(buf) chunks.push(buf.trim());
+        buf = p;
+      }
+    }
+    if(buf) chunks.push(buf.trim());
+
+    // 若還是過長，再硬切
+    const final = [];
+    for(const c of chunks){
+      if(c.length <= maxLen) final.push(c);
+      else {
+        for(let i=0;i<c.length;i+=maxLen){
+          final.push(c.slice(i, i+maxLen));
+        }
+      }
+    }
+    return final.filter(Boolean);
+  }
+
+  // ---- 深度遞迴掃描 JSON：把所有日文字串抽出
+  function extractJapaneseStrings(any){
+    const out = [];
+    const seenObj = new Set();
+
+    function walk(v){
+      if(v === null || v === undefined) return;
+
+      // 防循環
+      if(typeof v === "object"){
+        if(seenObj.has(v)) return;
+        seenObj.add(v);
+      }
+
+      if(typeof v === "string"){
+        const s = v.trim();
+        if(looksJapanese(s)) out.push(s);
+        return;
+      }
+
+      if(Array.isArray(v)){
+        for(const x of v) walk(x);
+        return;
+      }
+
+      if(typeof v === "object"){
+        for(const k of Object.keys(v)){
+          const val = v[k];
+
+          // 常見：*_ja / ja / tts / sentence_ja / correct_ja 之類 key，優先抽
+          if(typeof val === "string"){
+            const s = val.trim();
+            // 只要像日文就收；如果 key 明確是 ja 也收
+            if(looksJapanese(s) || /(^|_)ja$|ja_|_ja_|tts/i.test(k)) {
+              if(looksJapanese(s)) out.push(s);
+            }
+          } else {
+            walk(val);
+          }
+        }
+        return;
+      }
+    }
+
+    walk(any);
+    return out;
+  }
+
+  // ---- 朗讀播放器狀態
+  let rawList = [];       // 未去重/未洗牌
+  let playList = [];      // 目前播放順序
+  let idx = 0;
+  let playing = false;
+  let paused = false;
+  let currentUtter = null;
+
+  function setButtons(){
+    const hasList = playList.length > 0;
+    ui.playBtn.disabled = !hasList || playing;
+    ui.pauseBtn.disabled = !hasList || !playing;
+    ui.stopBtn.disabled = !hasList || (!playing && !paused);
+    ui.prevBtn.disabled = !hasList;
+    ui.nextBtn.disabled = !hasList;
+    ui.downloadBtn.disabled = !hasList;
+  }
+
+  function setStatus(t){ ui.status.textContent = t; }
+  function setProgress(){
+    ui.progress.textContent = `${playList.length ? (idx+1) : 0} / ${playList.length}`;
+  }
+
+  function rebuildPlayList(){
+    let list = [...rawList];
+
+    // 去重
+    if(ui.dedup.checked){
+      const s = new Set();
+      list = list.filter(x => {
+        const key = x.replace(/\s+/g, " ").trim();
+        if(s.has(key)) return false;
+        s.add(key);
+        return true;
+      });
+    }
+
+    // 隨機
+    if(ui.shuffle.checked){
+      list = shuffle(list);
+    }
+
+    playList = list;
+    idx = 0;
+    setProgress();
+
+    // preview
+    const preview = playList.slice(0, 80).map((s,i)=>`${i+1}. ${s}`).join("\n");
+    ui.preview.value = preview || "";
+    ui.now.textContent = "（空）";
+    setButtons();
+  }
+
+  async function loadMaterials(){
+    try{
+      setStatus("載入中…");
+      const res = await fetch(DATA_URL, { cache: "no-store" });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      rawList = extractJapaneseStrings(data)
+        // 避免單一符號 / 只有片段的「ー」之類
+        .map(s => s.replace(/\s+/g, " ").trim())
+        .filter(s => s.length >= 2);
+
+      rebuildPlayList();
+      setStatus(`已載入：${rawList.length} 筆（日文素材）`);
+    }catch(e){
+      console.error(e);
+      setStatus(`載入失敗：${String(e.message || e)}`);
+      rawList = [];
+      playList = [];
+      idx = 0;
+      ui.preview.value = "";
+      ui.now.textContent = "（空）";
+      setButtons();
+    }
+  }
+
+  function stopSpeaking(){
+    if("speechSynthesis" in window){
+      window.speechSynthesis.cancel();
+    }
+    currentUtter = null;
+    playing = false;
+    paused = false;
+    setButtons();
+  }
+
+  function speakOne(text, onDone){
+    if(!("speechSynthesis" in window)){
+      alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
+      return;
+    }
+
+    // 使用與你原本 speakJP 同樣策略，但要可調語速
+    const rate = parseFloat(ui.rate.value || "0.9");
+    const chunks = splitJPText(text, 120);
+    let ci = 0;
+
+    function speakChunk(){
+      if(ci >= chunks.length){
+        onDone?.();
+        return;
+      }
+      const u = new SpeechSynthesisUtterance(chunks[ci]);
+      u.lang = "ja-JP";
+      u.rate = rate;
+      u.pitch = 1.0;
+
+      const voices = window.speechSynthesis.getVoices?.() || [];
+      const jp = voices.find(v => (v.lang || "").toLowerCase().startsWith("ja"));
+      if(jp) u.voice = jp;
+
+      currentUtter = u;
+
+      u.onend = () => {
+        ci++;
+        speakChunk();
+      };
+      u.onerror = () => {
+        ci++;
+        speakChunk();
+      };
+
+      window.speechSynthesis.speak(u);
+    }
+
+    // iOS/Chrome 有時需要 cancel 再 speak 才穩
+    window.speechSynthesis.cancel();
+    speakChunk();
+  }
+
+  function playCurrent(){
+    if(playList.length === 0) return;
+
+    const text = playList[idx];
+    ui.now.textContent = text;
+    setProgress();
+
+    playing = true;
+    paused = false;
+    setButtons();
+    setStatus("播放中…");
+
+    speakOne(text, () => {
+      const gapMs = Math.round(parseFloat(ui.gap.value || "0") * 1000);
+
+      // 播完自動下一則
+      setTimeout(() => {
+        if(!playing) return;
+
+        idx++;
+        if(idx >= playList.length){
+          if(ui.loop.checked){
+            idx = 0;
+          } else {
+            setStatus("播放完畢");
+            stopSpeaking();
+            return;
+          }
+        }
+        playCurrent();
+      }, gapMs);
+    });
+  }
+
+  function pause(){
+    if(!("speechSynthesis" in window)) return;
+    if(!playing) return;
+    try{
+      window.speechSynthesis.pause();
+      paused = true;
+      playing = false;
+      setStatus("已暫停");
+      setButtons();
+    }catch(_){}
+  }
+
+  function resume(){
+    if(!("speechSynthesis" in window)) return;
+    if(playing) return;
+    if(!paused) return;
+    try{
+      window.speechSynthesis.resume();
+      paused = false;
+      playing = true;
+      setStatus("播放中…");
+      setButtons();
+    }catch(_){}
+  }
+
+  function next(){
+    if(playList.length === 0) return;
+    stopSpeaking();
+    idx = (idx + 1) % playList.length;
+    setProgress();
+    playCurrent();
+  }
+
+  function prev(){
+    if(playList.length === 0) return;
+    stopSpeaking();
+    idx = (idx - 1 + playList.length) % playList.length;
+    setProgress();
+    playCurrent();
+  }
+
+  function downloadList(){
+    const payload = {
+      generated_at: new Date().toISOString(),
+      source: DATA_URL,
+      count: playList.length,
+      items: playList
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "jp_playlist.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  // ---- UI 綁定
+  ui.rate.addEventListener("input", ()=> ui.rateVal.textContent = Number(ui.rate.value).toFixed(2));
+  ui.gap.addEventListener("input", ()=> ui.gapVal.textContent = ui.gap.value);
+
+  ui.shuffle.addEventListener("change", ()=> rebuildPlayList());
+  ui.dedup.addEventListener("change", ()=> rebuildPlayList());
+
+  ui.loadBtn.onclick = () => loadMaterials();
+
+  ui.playBtn.onclick = () => {
+    if(paused){
+      resume();
+      return;
+    }
+    stopSpeaking();
+    playCurrent();
+  };
+
+  ui.pauseBtn.onclick = () => pause();
+
+  ui.stopBtn.onclick = () => {
+    stopSpeaking();
+    setStatus("已停止");
+  };
+
+  ui.nextBtn.onclick = () => next();
+  ui.prevBtn.onclick = () => prev();
+
+  ui.downloadBtn.onclick = () => downloadList();
+
+  // ---- 初始載入
+  ui.rateVal.textContent = Number(ui.rate.value).toFixed(2);
+  ui.gapVal.textContent = ui.gap.value;
+  setButtons();
+  loadMaterials();
+})();
+
+
+  
 </script>
 </body>
 </html>
