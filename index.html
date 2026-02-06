@@ -76,6 +76,16 @@ textarea:focus { border-color: #111827; }
 .quizSubSm { text-align:center; color:#6b7280; font-size: 13px; margin-bottom: 8px; }
 
 .kpi { font-size: 18px; font-weight: 900; }
+
+select {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 9px 10px;
+  font-size: 14px;
+  background: white;
+  outline: none;
+}
+select:focus { border-color: #111827; }
 </style>
 </head>
 
@@ -259,6 +269,60 @@ textarea:focus { border-color: #111827; }
     </div>
   </div>
 
+  <!-- ✅ 新增：用法小測驗（reserved_grammar_sets） -->
+  <div class="card" style="margin-top:12px;">
+    <div class="sectionTitle">🧩 用法小測驗（中⇄日） <span class="badge">從 JSON 載入</span></div>
+    <div class="sectionDesc">
+      題庫來源：<span class="kbd">guide_data.json → reserved_grammar_sets.topics</span>。你只要在 JSON 加題目，就能直接擴充。
+    </div>
+    <hr class="hr" />
+
+    <div class="row">
+      <div class="group" style="min-width: 320px;">
+        <div class="label">題庫分類</div>
+        <select id="gramTopicSel">
+          <option value="">（載入中…）</option>
+        </select>
+        <div class="small">切換分類會自動出新題</div>
+      </div>
+
+      <div class="group">
+        <div class="label">方向</div>
+        <div class="seg">
+          <button id="gramC2JBtn" class="active">中文 → 選日文</button>
+          <button id="gramJ2CBtn">日文 → 選中文</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label">發音</div>
+        <div class="seg">
+          <button id="gramTTSOffBtn" class="active">不播放</button>
+          <button id="gramTTSOnBtn">播放日文</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label">分數</div>
+        <div id="gramScore" class="kpi">0 / 0</div>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <div id="gramPrompt" class="quizPromptSm">（載入中…）</div>
+      <div id="gramSub" class="quizSubSm">請選出正確對應</div>
+      <div id="gramChoices" class="choices"></div>
+
+      <div class="actions">
+        <button id="gramPlayBtn" class="playBtn">🔊 播放</button>
+        <button id="gramNextBtn" class="primary">下一題</button>
+        <button id="gramResetBtn" class="ghost">重置分數</button>
+      </div>
+
+      <div id="gramHint" class="hint"></div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -359,17 +423,15 @@ function newQuestion(){
   document.getElementById("hint").textContent = "";
 
   current = KANA[rand(KANA.length)];
-  const [h,k,r] = current;
-
   const promptEl = document.getElementById("prompt");
   const subEl = document.getElementById("subprompt");
 
   if(mode==="k2r"){
     promptEl.textContent = kanaLabel(current);
     subEl.textContent = "請選擇正確的 romaji 發音";
-    correct = r;
+    correct = current[2];
 
-    let opts=[r];
+    let opts=[correct];
     while(opts.length<4){
       const rr = KANA[rand(KANA.length)][2];
       uniqPush(opts, rr);
@@ -377,7 +439,7 @@ function newQuestion(){
     renderKanaChoices(shuffle(opts));
 
   } else if(mode==="r2k"){
-    promptEl.textContent = r;
+    promptEl.textContent = current[2];
     subEl.textContent = "請選擇正確的假名";
     correct = kanaLabel(current);
 
@@ -566,16 +628,16 @@ srText.addEventListener("input", () => {
 });
 
 /* ============================================================
-   新增：中⇄日 小測驗遊戲（可重用）
-   - bank: [{ zh, ja }]
+   中⇄日 小測驗遊戲（可重用）
 ============================================================ */
 function createBilingualQuiz(opts){
   const {
     bank,
-    ids,                // {prompt, sub, choices, score, hint}
-    btns,               // {dirA, dirB, ttsOff, ttsOn, play, next, reset}
-    defaultDirection,   // "C2J" | "J2C"
-    titleForHint
+    ids,
+    btns,
+    defaultDirection,
+    titleForHint,
+    onBeforeNewQuestion   // optional hook: called before picking a question
   } = opts;
 
   let direction = defaultDirection || "C2J";
@@ -588,7 +650,6 @@ function createBilingualQuiz(opts){
   function setScore(){
     document.getElementById(ids.score).textContent = `${score.c} / ${score.t}`;
   }
-
   function setHint(text){ document.getElementById(ids.hint).textContent = text || ""; }
 
   function getPromptText(item){
@@ -642,11 +703,14 @@ function createBilingualQuiz(opts){
 
   function maybePlayForQuestion(){
     if(!ttsEnabled || !q) return;
-    // 規則：永遠播放「正確日文」
     speakJP(q.ja);
   }
 
   function newQ(){
+    if(typeof onBeforeNewQuestion === "function"){
+      onBeforeNewQuestion();
+    }
+
     if(!bank || bank.length < 4){
       document.getElementById(ids.prompt).textContent = "（資料不足，至少需要 4 筆）";
       document.getElementById(ids.sub).textContent = "請先在 JSON 增加資料";
@@ -708,7 +772,6 @@ function createBilingualQuiz(opts){
     newQ();
   };
 
-  // init state
   if(defaultDirection === "J2C"){
     direction = "J2C";
     document.getElementById(btns.dirB).classList.add("active");
@@ -718,13 +781,14 @@ function createBilingualQuiz(opts){
   newQ();
 
   return {
-    addItem: (zh, ja) => bank.push({ zh, ja }),
+    setBank: (newBank) => { bank.length = 0; newBank.forEach(x => bank.push(x)); },
+    newQuestion: () => newQ(),
     getState: () => ({ direction, ttsEnabled, score })
   };
 }
 
 /* ============================================================
-   從 JSON 載入題庫資料（保留所有功能）
+   從 JSON 載入題庫資料
 ============================================================ */
 async function loadGuideData(){
   const res = await fetch("./guide_data.json", { cache: "no-store" });
@@ -733,66 +797,93 @@ async function loadGuideData(){
 
   const greetings = data?.banks?.greetings;
   const words = data?.banks?.words;
+  const grammarTopics = data?.reserved_grammar_sets?.topics;
 
   if(!Array.isArray(greetings) || !Array.isArray(words)){
     throw new Error("JSON 結構錯誤：找不到 banks.greetings 或 banks.words");
   }
-  return { greetings, words, meta: data };
+  if(!Array.isArray(grammarTopics)){
+    throw new Error("JSON 結構錯誤：找不到 reserved_grammar_sets.topics");
+  }
+
+  return { greetings, words, grammarTopics, meta: data };
 }
 
 /* ============================================================
-   啟動：問候語 / 單字 小測驗（改為 JSON 載入）
+   啟動：問候語 / 單字 / 用法 小測驗
 ============================================================ */
 let greetingQuiz = null;
 let wordQuiz = null;
+let grammarQuiz = null;
+
+function fillGrammarTopicSelect(topics){
+  const sel = document.getElementById("gramTopicSel");
+  sel.innerHTML = "";
+
+  topics.forEach((t, idx) => {
+    const opt = document.createElement("option");
+    opt.value = String(idx);
+    opt.textContent = t.title || t.id || ("Topic " + (idx+1));
+    sel.appendChild(opt);
+  });
+}
 
 async function initBilingualQuizzes(){
   try{
-    const { greetings, words } = await loadGuideData();
+    const { greetings, words, grammarTopics } = await loadGuideData();
 
+    // greetings
     greetingQuiz = createBilingualQuiz({
       bank: greetings,
-      ids: {
-        prompt: "greetPrompt",
-        sub: "greetSub",
-        choices: "greetChoices",
-        score: "greetScore",
-        hint: "greetHint"
-      },
-      btns: {
-        dirA: "greetC2JBtn",
-        dirB: "greetJ2CBtn",
-        ttsOff: "greetTTSOffBtn",
-        ttsOn: "greetTTSOnBtn",
-        play: "greetPlayBtn",
-        next: "greetNextBtn",
-        reset: "greetResetBtn"
-      },
+      ids: { prompt:"greetPrompt", sub:"greetSub", choices:"greetChoices", score:"greetScore", hint:"greetHint" },
+      btns: { dirA:"greetC2JBtn", dirB:"greetJ2CBtn", ttsOff:"greetTTSOffBtn", ttsOn:"greetTTSOnBtn", play:"greetPlayBtn", next:"greetNextBtn", reset:"greetResetBtn" },
       defaultDirection: "C2J",
       titleForHint: "對應"
     });
 
+    // words
     wordQuiz = createBilingualQuiz({
       bank: words,
-      ids: {
-        prompt: "wordPrompt",
-        sub: "wordSub",
-        choices: "wordChoices",
-        score: "wordScore",
-        hint: "wordHint"
-      },
-      btns: {
-        dirA: "wordC2JBtn",
-        dirB: "wordJ2CBtn",
-        ttsOff: "wordTTSOffBtn",
-        ttsOn: "wordTTSOnBtn",
-        play: "wordPlayBtn",
-        next: "wordNextBtn",
-        reset: "wordResetBtn"
-      },
+      ids: { prompt:"wordPrompt", sub:"wordSub", choices:"wordChoices", score:"wordScore", hint:"wordHint" },
+      btns: { dirA:"wordC2JBtn", dirB:"wordJ2CBtn", ttsOff:"wordTTSOffBtn", ttsOn:"wordTTSOnBtn", play:"wordPlayBtn", next:"wordNextBtn", reset:"wordResetBtn" },
       defaultDirection: "C2J",
       titleForHint: "對應"
     });
+
+    // ✅ grammar topics -> select
+    const topics = grammarTopics.filter(t => Array.isArray(t.bank));
+    if(topics.length === 0){
+      throw new Error("reserved_grammar_sets.topics 沒有任何可用的 bank 陣列");
+    }
+
+    fillGrammarTopicSelect(topics);
+
+    // grammar quiz uses a mutable bank array so we can swap topic without rebuilding UI
+    const gramBank = topics[0].bank.slice();
+
+    grammarQuiz = createBilingualQuiz({
+      bank: gramBank,
+      ids: { prompt:"gramPrompt", sub:"gramSub", choices:"gramChoices", score:"gramScore", hint:"gramHint" },
+      btns: { dirA:"gramC2JBtn", dirB:"gramJ2CBtn", ttsOff:"gramTTSOffBtn", ttsOn:"gramTTSOnBtn", play:"gramPlayBtn", next:"gramNextBtn", reset:"gramResetBtn" },
+      defaultDirection: "C2J",
+      titleForHint: "用法",
+      onBeforeNewQuestion: () => {
+        // 若題庫切換成空或 <4，會由引擎顯示提示
+      }
+    });
+
+    // topic change handler
+    const sel = document.getElementById("gramTopicSel");
+    sel.onchange = () => {
+      const idx = parseInt(sel.value, 10);
+      const topic = topics[idx];
+      if(!topic || !Array.isArray(topic.bank)){
+        return;
+      }
+      grammarQuiz.setBank(topic.bank);
+      grammarQuiz.newQuestion();
+      document.getElementById("gramHint").textContent = "";
+    };
 
   } catch(err){
     console.error(err);
@@ -800,8 +891,8 @@ async function initBilingualQuizzes(){
     document.getElementById("greetSub").textContent = "請確認 guide_data.json 路徑與 JSON 格式";
     document.getElementById("wordPrompt").textContent = "（載入失敗）";
     document.getElementById("wordSub").textContent = "請確認 guide_data.json 路徑與 JSON 格式";
-
-    // 不影響 50 音/語音辨識：其他功能照用
+    document.getElementById("gramPrompt").textContent = "（載入失敗）";
+    document.getElementById("gramSub").textContent = "請確認 guide_data.json 路徑與 JSON 格式";
     alert("題庫 JSON 載入失敗：\n" + (err?.message || err));
   }
 }
@@ -816,3 +907,4 @@ initBilingualQuizzes();
 </script>
 </body>
 </html>
+
