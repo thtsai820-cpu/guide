@@ -67,7 +67,7 @@ textarea:focus { border-color: #111827; }
 .hr { height:1px; background:#e5e7eb; margin: 10px 0; border:0; }
 
 .quizPromptSm {
-  font-size: 36px;
+  font-size: 40px;
   font-weight: 900;
   text-align: center;
   margin: 8px 0 4px;
@@ -77,45 +77,24 @@ textarea:focus { border-color: #111827; }
 
 .kpi { font-size: 18px; font-weight: 900; }
 
-select {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 9px 10px;
-  font-size: 14px;
-  background: white;
-  outline: none;
-}
-select:focus { border-color: #111827; }
-
-.pillRow{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:10px; }
-.pill{
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-weight: 800;
-  cursor: pointer;
-}
-.pill.correct{ border-color:#16a34a; background:#ecfdf5; }
-.pill.wrong{ border-color:#dc2626; background:#fef2f2; }
-.orderBox{
-  border:1px dashed #d1d5db;
-  border-radius: 12px;
-  padding:10px 12px;
-  background:#fff;
-}
-.orderLine{
-  font-size: 18px;
+/* 新增：朗讀區 */
+.readingNow {
+  font-size: 22px;
   font-weight: 900;
-  text-align:center;
+  text-align: center;
+  margin: 10px 0 4px;
   word-break: break-word;
-  min-height: 28px;
 }
-.orderHintLine{
-  text-align:center;
-  color:#6b7280;
+.readingMeta {
+  text-align: center;
+  color: #6b7280;
   font-size: 12px;
-  margin-top:6px;
+}
+.readingWarn {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.5;
 }
 </style>
 </head>
@@ -128,7 +107,7 @@ select:focus { border-color: #111827; }
 <div class="main">
   <div class="grid">
 
-    <!-- 左側：50音測驗（原本功能保留） -->
+    <!-- 左側：50音測驗 -->
     <div class="card">
       <div class="row">
         <div class="group">
@@ -170,7 +149,7 @@ select:focus { border-color: #111827; }
       </div>
     </div>
 
-    <!-- 右側：語音辨識（原本功能保留） -->
+    <!-- 右側：語音辨識 -->
     <div class="card">
       <div class="row" style="align-items:center; justify-content:space-between;">
         <div>
@@ -207,10 +186,12 @@ select:focus { border-color: #111827; }
 
   </div>
 
-  <!-- 問候語小測驗（維持） -->
+  <!-- 新增：問候語小測驗 -->
   <div class="card" style="margin-top:12px;">
     <div class="sectionTitle">🧩 問候語小測驗（中⇄日） <span class="badge">可擴充</span></div>
-    <div class="sectionDesc">遊戲玩法：每題四選一，可切換「中文→選日文」或「日文→選中文」。可選擇是否播放日文（題目/正解）。</div>
+    <div class="sectionDesc">
+      遊戲玩法：每題四選一，可切換「中文→選日文」或「日文→選中文」。可選擇是否播放日文（題目/正解）。
+    </div>
     <hr class="hr" />
 
     <div class="row">
@@ -221,13 +202,16 @@ select:focus { border-color: #111827; }
           <button id="greetJ2CBtn">日文 → 選中文</button>
         </div>
       </div>
+
       <div class="group">
         <div class="label">發音</div>
         <div class="seg">
           <button id="greetTTSOffBtn" class="active">不播放</button>
           <button id="greetTTSOnBtn">播放日文</button>
         </div>
+        <div class="small">播放內容：題目若為日文就播題目；題目為中文就播放正確日文</div>
       </div>
+
       <div class="group">
         <div class="label">分數</div>
         <div id="greetScore" class="kpi">0 / 0</div>
@@ -235,7 +219,7 @@ select:focus { border-color: #111827; }
     </div>
 
     <div style="margin-top:10px;">
-      <div id="greetPrompt" class="quizPromptSm">（載入中…）</div>
+      <div id="greetPrompt" class="quizPromptSm">你好</div>
       <div id="greetSub" class="quizSubSm">請選出正確對應</div>
       <div id="greetChoices" class="choices"></div>
 
@@ -244,14 +228,17 @@ select:focus { border-color: #111827; }
         <button id="greetNextBtn" class="primary">下一題</button>
         <button id="greetResetBtn" class="ghost">重置分數</button>
       </div>
+
       <div id="greetHint" class="hint"></div>
     </div>
   </div>
 
-  <!-- 單字小測驗（維持） -->
+  <!-- 新增：單字小測驗 -->
   <div class="card" style="margin-top:12px;">
     <div class="sectionTitle">🧩 單字小測驗（中⇄日） <span class="badge">可擴充</span></div>
-    <div class="sectionDesc">遊戲玩法同上。你未來要加更多單字，只要把資料加入 JSON 即可。</div>
+    <div class="sectionDesc">
+      遊戲玩法同上。你未來要加更多單字，只要把資料加入陣列即可。
+    </div>
     <hr class="hr" />
 
     <div class="row">
@@ -262,6 +249,7 @@ select:focus { border-color: #111827; }
           <button id="wordJ2CBtn">日文 → 選中文</button>
         </div>
       </div>
+
       <div class="group">
         <div class="label">發音</div>
         <div class="seg">
@@ -269,6 +257,7 @@ select:focus { border-color: #111827; }
           <button id="wordTTSOnBtn">播放日文</button>
         </div>
       </div>
+
       <div class="group">
         <div class="label">分數</div>
         <div id="wordScore" class="kpi">0 / 0</div>
@@ -276,7 +265,7 @@ select:focus { border-color: #111827; }
     </div>
 
     <div style="margin-top:10px;">
-      <div id="wordPrompt" class="quizPromptSm">（載入中…）</div>
+      <div id="wordPrompt" class="quizPromptSm">蘋果</div>
       <div id="wordSub" class="quizSubSm">請選出正確對應</div>
       <div id="wordChoices" class="choices"></div>
 
@@ -285,161 +274,61 @@ select:focus { border-color: #111827; }
         <button id="wordNextBtn" class="primary">下一題</button>
         <button id="wordResetBtn" class="ghost">重置分數</button>
       </div>
+
       <div id="wordHint" class="hint"></div>
     </div>
   </div>
 
-  
-  <!-- 新增：日文素材朗讀播放器 -->
+  <!-- 新增：素材朗讀（只取 greetings + words） -->
   <div class="card" style="margin-top:12px;">
-    <div class="sectionTitle">🎧 日文素材朗讀（從 JSON 自動抽取） <span class="badge">上班聽</span></div>
+    <div class="sectionTitle">🔊 素材朗讀（問候語＋單字） <span class="badge">從 JSON 讀</span></div>
     <div class="sectionDesc">
-      會從 <span class="kbd">guide_data.json</span> 自動抽出所有日文句子（含假名/漢字/片假名），組成播放清單並用瀏覽器 TTS 朗讀。
+      只會朗讀資料庫 <span class="kbd">banks.greetings</span> 與 <span class="kbd">banks.words</span> 的 <span class="kbd">ja</span>。
+      並且會自動跳過「純漢字」內容（必須含假名才會唸）。
     </div>
     <hr class="hr" />
 
-    <div class="row">
-      <div class="group">
-        <div class="label">資料來源</div>
-        <div class="badge">guide_data.json</div>
-        <div class="small">請確保此檔與 index.html 同一層（或改 JS 的路徑）</div>
+    <div class="row" style="align-items:center;">
+      <div class="group" style="min-width:220px;">
+        <div class="label">資料檔</div>
+        <div class="small"><span class="kbd" id="dbUrlLabel">./guide_data.json</span></div>
       </div>
 
       <div class="group">
-        <div class="label">語速</div>
-        <input id="jpRate" type="range" min="0.6" max="1.2" step="0.05" value="0.9" />
-        <div class="small">目前：<span id="jpRateVal">0.90</span></div>
-      </div>
-
-      <div class="group">
-        <div class="label">間隔（秒）</div>
-        <input id="jpGap" type="range" min="0" max="2" step="0.1" value="0.3" />
-        <div class="small">目前：<span id="jpGapVal">0.3</span>s</div>
-      </div>
-
-      <div class="group">
-        <div class="label">選項</div>
-        <div class="row" style="gap:8px;">
-          <label class="small"><input id="jpShuffle" type="checkbox" /> 隨機</label>
-          <label class="small"><input id="jpLoop" type="checkbox" checked /> 循環</label>
-          <label class="small"><input id="jpDedup" type="checkbox" checked /> 去重</label>
+        <div class="label">模式</div>
+        <div class="seg">
+          <button id="readLoopBtn" class="active">循環播放</button>
+          <button id="readOnceBtn">播完停止</button>
         </div>
       </div>
+
+      <div class="group">
+        <div class="label">自動下一句</div>
+        <div class="seg">
+          <button id="readAutoOnBtn" class="active">開</button>
+          <button id="readAutoOffBtn">關</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label">進度</div>
+        <div id="readProgress" class="kpi">0 / 0</div>
+      </div>
     </div>
+
+    <div class="readingNow" id="readNow">（尚未載入）</div>
+    <div class="readingMeta" id="readMeta">—</div>
 
     <div class="actions">
-      <button id="jpLoadBtn" class="ghost">📥 重新載入素材</button>
-      <button id="jpPlayBtn" class="primary">▶️ 播放</button>
-      <button id="jpPauseBtn" class="ghost" disabled>⏸ 暫停</button>
-      <button id="jpStopBtn" class="danger" disabled>⏹ 停止</button>
-      <button id="jpPrevBtn" class="ghost" disabled>⏮ 上一則</button>
-      <button id="jpNextBtn" class="ghost" disabled>⏭ 下一則</button>
-      <button id="jpDownloadBtn" class="playBtn" disabled>⬇️ 下載清單</button>
+      <button id="readPrevBtn" class="ghost">⏮ 上一句</button>
+      <button id="readPlayBtn" class="primary">▶︎ 播放</button>
+      <button id="readNextBtn" class="ghost">⏭ 下一句</button>
+      <button id="readStopBtn" class="danger">⏹ 停止</button>
+      <button id="readReloadBtn" class="playBtn">⟲ 重新載入 JSON</button>
     </div>
 
-    <div class="note">
-      <div class="small">狀態：<span id="jpStatus" class="final">未載入</span></div>
-      <div class="small">進度：<span id="jpProgress" class="final">0 / 0</span></div>
-      <div class="small">正在朗讀：</div>
-      <div id="jpNow" class="final" style="font-size:18px; margin-top:6px;">（空）</div>
-    </div>
-
-    <div style="margin-top:10px;">
-      <div class="label">素材預覽（最多顯示 80 筆）：</div>
-      <textarea id="jpPreview" readonly></textarea>
-    </div>
-
-    <div class="note small">
-      小提醒：iOS Safari 的語音與背景播放限制較多，桌面 Chrome/Edge 最穩。朗讀時請保持頁面開著。
-    </div>
-  </div>
-
-
-
-  
-  <!-- ✅ 用法小測驗（題型版） -->
-  <div class="card" style="margin-top:12px;">
-    <div class="sectionTitle">🧩 用法小測驗（題型：填空 / 排序 / 判斷 / 四選一） <span class="badge">從 JSON 載入</span></div>
-    <div class="sectionDesc">題庫來源：<span class="kbd">guide_data.json → reserved_grammar_sets.topics[].items</span>。你只要在 JSON 加題目就能擴充。</div>
-    <hr class="hr" />
-
-    <div class="row">
-      <div class="group" style="min-width: 320px;">
-        <div class="label">題庫分類</div>
-        <select id="gramTopicSel"><option value="">（載入中…）</option></select>
-      </div>
-
-      <div class="group" style="min-width: 210px;">
-        <div class="label">題型</div>
-        <select id="gramTypeSel">
-          <option value="mix" selected>混合（隨機）</option>
-          <option value="mcq">四選一（中⇄日）</option>
-          <option value="cloze">選詞填空</option>
-          <option value="order">句子排序</option>
-          <option value="judge">句型判斷（對/錯）</option>
-        </select>
-      </div>
-
-      <div class="group">
-        <div class="label">方向（只影響四選一）</div>
-        <div class="seg">
-          <button id="gramC2JBtn" class="active">中文 → 選日文</button>
-          <button id="gramJ2CBtn">日文 → 選中文</button>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="label">發音</div>
-        <div class="seg">
-          <button id="gramTTSOffBtn" class="active">不播放</button>
-          <button id="gramTTSOnBtn">播放日文</button>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="label">分數</div>
-        <div id="gramScore" class="kpi">0 / 0</div>
-      </div>
-    </div>
-
-    <div style="margin-top:10px;">
-      <div id="gramPrompt" class="quizPromptSm">（載入中…）</div>
-      <div id="gramSub" class="quizSubSm">請作答</div>
-
-      <!-- 題型區：四選一 -->
-      <div id="gramChoices" class="choices"></div>
-
-      <!-- 題型區：排序 -->
-      <div id="gramOrderArea" class="orderBox" style="display:none; margin-top:10px;">
-        <div class="orderLine" id="gramOrderLine">（點選下面片段組句）</div>
-        <div class="orderHintLine">提示：點片段加入答案；按「退一步」可移除最後一段</div>
-        <div class="actions" style="justify-content:center;">
-          <button id="gramOrderUndoBtn" class="ghost">退一步</button>
-          <button id="gramOrderClearBtn" class="danger">清空</button>
-          <button id="gramOrderCheckBtn" class="primary">送出判定</button>
-        </div>
-        <div class="pillRow" id="gramOrderPieces"></div>
-      </div>
-
-      <!-- 題型區：判斷 -->
-      <div id="gramJudgeArea" style="display:none; margin-top:10px;">
-        <div class="note">
-          <div class="small">日文句子：</div>
-          <div style="font-weight:900; font-size:18px; margin-top:6px;" id="gramJudgeSentence">（載入中…）</div>
-        </div>
-        <div class="actions" style="justify-content:center;">
-          <button id="gramJudgeTrueBtn" class="primary">正確</button>
-          <button id="gramJudgeFalseBtn" class="danger">錯誤</button>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button id="gramPlayBtn" class="playBtn">🔊 播放</button>
-        <button id="gramNextBtn" class="primary">下一題</button>
-        <button id="gramResetBtn" class="ghost">重置分數</button>
-      </div>
-
-      <div id="gramHint" class="hint"></div>
+    <div class="readingWarn">
+      若你更新了 json 內容但網頁沒變，請按「重新載入 JSON」或強制重新整理（Ctrl+F5）。
     </div>
   </div>
 
@@ -454,7 +343,7 @@ function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
 function uniqPush(arr, v){ if(!arr.includes(v)) arr.push(v); }
 
 /* ============================================================
-   TTS：唸日文
+   TTS：唸日文（假名/日文句子）
 ============================================================ */
 function speakJP(text){
   if(!("speechSynthesis" in window)) {
@@ -479,7 +368,7 @@ if("speechSynthesis" in window){
 }
 
 /* ============================================================
-   50音測驗（原本功能，未改）
+   50音測驗（原本功能保留）
 ============================================================ */
 const KANA = [
 ["あ","ア","a"],["い","イ","i"],["う","ウ","u"],["え","エ","e"],["お","オ","o"],
@@ -495,23 +384,28 @@ const KANA = [
 ["ん","ン","n"]
 ];
 
-let script = "hira";
-let mode = "k2r";
+let script = "hira"; // hira | kata
+let mode = "k2r";    // k2r | r2k | l2k
 let current;
 let correct;
 let score = { c:0, t:0 };
 let revealed = false;
 
 function kanaLabel(item){ return script==="hira" ? item[0] : item[1]; }
-function updateScore(){ document.getElementById("scoreBox").textContent = `${score.c} / ${score.t}`; }
 
-function renderKanaChoices(arr){
+function updateScore(){
+  document.getElementById("scoreBox").textContent = `${score.c} / ${score.t}`;
+}
+
+function renderChoices(arr){
   const box=document.getElementById("choices");
   box.innerHTML="";
+
   arr.forEach(v=>{
     const b=document.createElement("button");
     b.className="choice";
     b.textContent=v;
+
     b.onclick=()=>{
       if(revealed) return;
       revealed=true;
@@ -523,10 +417,12 @@ function renderKanaChoices(arr){
       }else{
         b.classList.add("wrong");
       }
+
       updateScore();
       document.getElementById("hint").textContent =
         `正解：${correct}（${current[0]} / ${current[1]} = ${current[2]}）`;
     };
+
     box.appendChild(b);
   });
 }
@@ -534,7 +430,9 @@ function renderKanaChoices(arr){
 function newQuestion(){
   revealed = false;
   document.getElementById("hint").textContent = "";
+
   current = KANA[rand(KANA.length)];
+  const [h,k,r] = current;
 
   const promptEl = document.getElementById("prompt");
   const subEl = document.getElementById("subprompt");
@@ -542,71 +440,84 @@ function newQuestion(){
   if(mode==="k2r"){
     promptEl.textContent = kanaLabel(current);
     subEl.textContent = "請選擇正確的 romaji 發音";
-    correct = current[2];
+    correct = r;
 
-    let opts=[correct];
+    let opts=[r];
     while(opts.length<4){
       const rr = KANA[rand(KANA.length)][2];
       uniqPush(opts, rr);
     }
-    renderKanaChoices(shuffle(opts));
+    renderChoices(shuffle(opts));
+
   } else if(mode==="r2k"){
-    promptEl.textContent = current[2];
+    promptEl.textContent = r;
     subEl.textContent = "請選擇正確的假名";
     correct = kanaLabel(current);
 
     let opts=[correct];
     while(opts.length<4){
-      const kk2 = script==="hira" ? KANA[rand(KANA.length)][0] : KANA[rand(KANA.length)][1];
+      const kk2 = script==="hira"
+        ? KANA[rand(KANA.length)][0]
+        : KANA[rand(KANA.length)][1];
       uniqPush(opts, kk2);
     }
-    renderKanaChoices(shuffle(opts));
-  } else {
+    renderChoices(shuffle(opts));
+
+  } else { // l2k
     promptEl.textContent = "🔊";
     subEl.textContent = "按播放聽發音，選出正確假名（可重播）";
     correct = kanaLabel(current);
 
     let opts=[correct];
     while(opts.length<4){
-      const kk2 = script==="hira" ? KANA[rand(KANA.length)][0] : KANA[rand(KANA.length)][1];
+      const kk2 = script==="hira"
+        ? KANA[rand(KANA.length)][0]
+        : KANA[rand(KANA.length)][1];
       uniqPush(opts, kk2);
     }
-    renderKanaChoices(shuffle(opts));
+    renderChoices(shuffle(opts));
     setTimeout(()=> speakJP(kanaLabel(current)), 120);
   }
 }
 
-document.getElementById("hiraBtn").onclick=()=>{
+// UI events (50音)
+const hiraBtn = document.getElementById("hiraBtn");
+const kataBtn = document.getElementById("kataBtn");
+const k2rBtn  = document.getElementById("k2rBtn");
+const r2kBtn  = document.getElementById("r2kBtn");
+const l2kBtn  = document.getElementById("l2kBtn");
+
+hiraBtn.onclick=()=>{
   script="hira";
-  document.getElementById("hiraBtn").classList.add("active");
-  document.getElementById("kataBtn").classList.remove("active");
+  hiraBtn.classList.add("active");
+  kataBtn.classList.remove("active");
   newQuestion();
 };
-document.getElementById("kataBtn").onclick=()=>{
+kataBtn.onclick=()=>{
   script="kata";
-  document.getElementById("kataBtn").classList.add("active");
-  document.getElementById("hiraBtn").classList.remove("active");
+  kataBtn.classList.add("active");
+  hiraBtn.classList.remove("active");
   newQuestion();
 };
-document.getElementById("k2rBtn").onclick=()=>{
+k2rBtn.onclick=()=>{
   mode="k2r";
-  document.getElementById("k2rBtn").classList.add("active");
-  document.getElementById("r2kBtn").classList.remove("active");
-  document.getElementById("l2kBtn").classList.remove("active");
+  k2rBtn.classList.add("active");
+  r2kBtn.classList.remove("active");
+  l2kBtn.classList.remove("active");
   newQuestion();
 };
-document.getElementById("r2kBtn").onclick=()=>{
+r2kBtn.onclick=()=>{
   mode="r2k";
-  document.getElementById("r2kBtn").classList.add("active");
-  document.getElementById("k2rBtn").classList.remove("active");
-  document.getElementById("l2kBtn").classList.remove("active");
+  r2kBtn.classList.add("active");
+  k2rBtn.classList.remove("active");
+  l2kBtn.classList.remove("active");
   newQuestion();
 };
-document.getElementById("l2kBtn").onclick=()=>{
+l2kBtn.onclick=()=>{
   mode="l2k";
-  document.getElementById("l2kBtn").classList.add("active");
-  document.getElementById("k2rBtn").classList.remove("active");
-  document.getElementById("r2kBtn").classList.remove("active");
+  l2kBtn.classList.add("active");
+  k2rBtn.classList.remove("active");
+  r2kBtn.classList.remove("active");
   newQuestion();
 };
 
@@ -622,7 +533,7 @@ document.getElementById("playBtn").onclick=()=>{
 };
 
 /* ============================================================
-   語音辨識（原本功能，未改）
+   語音辨識（SpeechRecognition）
 ============================================================ */
 const srStatus = document.getElementById("srStatus");
 const srStartBtn = document.getElementById("srStartBtn");
@@ -638,7 +549,9 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
 let recog = null;
 let recognizing = false;
 
-function setSRStatus(text){ srStatus.textContent = `狀態：${text}`; }
+function setSRStatus(text){
+  srStatus.textContent = `狀態：${text}`;
+}
 
 function ensureRecognition(){
   if(!SpeechRecognition){
@@ -667,7 +580,9 @@ function ensureRecognition(){
     srStopBtn.disabled = true;
   };
 
-  recog.onerror = (e) => { setSRStatus("錯誤：" + (e.error || "unknown")); };
+  recog.onerror = (e) => {
+    setSRStatus("錯誤：" + (e.error || "unknown"));
+  };
 
   recog.onresult = (event) => {
     let interim = "";
@@ -691,17 +606,49 @@ function ensureRecognition(){
   return recog;
 }
 
-srStartBtn.onclick = () => { const r = ensureRecognition(); if(!r) return; try { r.start(); } catch(_) {} };
-srStopBtn.onclick = () => { if(recog && recognizing){ recog.stop(); } };
-srClearBtn.onclick = () => { srLiveEl.textContent="（空）"; srFinalEl.textContent="（空）"; srText.value=""; };
-srSpeakBtn.onclick = () => { const t=(srText.value||"").trim(); if(!t){ alert("目前沒有辨識結果可播放。"); return; } speakJP(t); };
-srText.addEventListener("input", () => { const t=srText.value.trim(); srFinalEl.textContent = t ? t : "（空）"; });
+srStartBtn.onclick = () => {
+  const r = ensureRecognition();
+  if(!r) return;
+  try { r.start(); } catch(_) {}
+};
+
+srStopBtn.onclick = () => {
+  if(recog && recognizing){
+    recog.stop();
+  }
+};
+
+srClearBtn.onclick = () => {
+  srLiveEl.textContent = "（空）";
+  srFinalEl.textContent = "（空）";
+  srText.value = "";
+};
+
+srSpeakBtn.onclick = () => {
+  const t = (srText.value || "").trim();
+  if(!t){
+    alert("目前沒有辨識結果可播放。");
+    return;
+  }
+  speakJP(t);
+};
+
+srText.addEventListener("input", () => {
+  const t = srText.value.trim();
+  srFinalEl.textContent = t ? t : "（空）";
+});
 
 /* ============================================================
-   共用：四選一（問候/單字）
+   新增：中⇄日 小測驗遊戲（可重用）
 ============================================================ */
 function createBilingualQuiz(opts){
-  const { bank, ids, btns, defaultDirection, titleForHint } = opts;
+  const {
+    bank,
+    ids,                // {prompt, sub, choices, score, hint}
+    btns,               // {dirA, dirB, ttsOff, ttsOn, play, next, reset}
+    defaultDirection,   // "C2J" | "J2C"
+    titleForHint
+  } = opts;
 
   let direction = defaultDirection || "C2J";
   let ttsEnabled = false;
@@ -710,7 +657,9 @@ function createBilingualQuiz(opts){
   let revealed = false;
   let score = { c:0, t:0 };
 
-  function setScore(){ document.getElementById(ids.score).textContent = `${score.c} / ${score.t}`; }
+  function setScore(){
+    document.getElementById(ids.score).textContent = `${score.c} / ${score.t}`;
+  }
   function setHint(text){ document.getElementById(ids.hint).textContent = text || ""; }
 
   function getPromptText(item){ return direction === "C2J" ? item.zh : item.ja; }
@@ -748,24 +697,31 @@ function createBilingualQuiz(opts){
         setScore();
 
         setHint(`正解：${correct}（${titleForHint}：${q.zh} ⇄ ${q.ja}）`);
-        if(ttsEnabled){ speakJP(q.ja); }
+
+        if(ttsEnabled){
+          speakJP(q.ja);
+        }
       };
 
       box.appendChild(b);
     });
   }
 
-  function newQ(){
-    if(!bank || bank.length < 4){
-      document.getElementById(ids.prompt).textContent = "（資料不足，至少需要 4 筆）";
-      document.getElementById(ids.sub).textContent = "請先在 JSON 增加資料";
-      document.getElementById(ids.choices).innerHTML = "";
-      setHint("");
-      return;
-    }
+  function maybePlayForQuestion(){
+    if(!ttsEnabled || !q) return;
+    speakJP(q.ja);
+  }
 
+  function newQ(){
     revealed = false;
     setHint("");
+
+    if(!bank || bank.length < 4){
+      document.getElementById(ids.prompt).textContent = "題庫不足（至少 4 筆）";
+      document.getElementById(ids.sub).textContent = "請先在 JSON 裡補資料";
+      document.getElementById(ids.choices).innerHTML = "";
+      return;
+    }
 
     q = bank[rand(bank.length)];
     document.getElementById(ids.prompt).textContent = getPromptText(q);
@@ -776,7 +732,7 @@ function createBilingualQuiz(opts){
     const choices = shuffle([correct, ...wrong]);
     renderChoices(choices);
 
-    if(ttsEnabled){ setTimeout(()=> speakJP(q.ja), 120); }
+    setTimeout(()=> maybePlayForQuestion(), 100);
   }
 
   document.getElementById(btns.dirA).onclick = () => {
@@ -804,812 +760,279 @@ function createBilingualQuiz(opts){
     if(q) speakJP(q.ja);
   };
 
-  document.getElementById(btns.play).onclick = () => { if(q) speakJP(q.ja); };
+  document.getElementById(btns.play).onclick = () => {
+    if(!q) return;
+    speakJP(q.ja);
+  };
   document.getElementById(btns.next).onclick = () => newQ();
-  document.getElementById(btns.reset).onclick = () => { score={c:0,t:0}; setScore(); newQ(); };
+  document.getElementById(btns.reset).onclick = () => {
+    score = { c:0, t:0 };
+    setScore();
+    newQ();
+  };
 
   if(defaultDirection === "J2C"){
     direction = "J2C";
     document.getElementById(btns.dirB).classList.add("active");
     document.getElementById(btns.dirA).classList.remove("active");
   }
-
   setScore();
   newQ();
-  return { newQuestion:newQ };
-}
-
-/* ============================================================
-   ✅ 用法題型引擎（mcq/cloze/order/judge）
-============================================================ */
-function createGrammarEngine(ui){
-  let ttsEnabled = false;
-  let mcqDirection = "C2J";
-  let itemsAll = [];
-  let itemsFiltered = [];
-  let current = null;
-  let revealed = false;
-  let score = { c:0, t:0 };
-  let orderState = { picked: [] };
-
-  function setScore(){ ui.score.textContent = `${score.c} / ${score.t}`; }
-  function setHint(t){ ui.hint.textContent = t || ""; }
-  function setPrompt(t){ ui.prompt.textContent = t || ""; }
-  function setSub(t){ ui.sub.textContent = t || ""; }
-
-  function showArea(kind){
-    ui.choices.style.display = (kind === "mcq" || kind === "cloze") ? "grid" : "none";
-    ui.orderArea.style.display = (kind === "order") ? "block" : "none";
-    ui.judgeArea.style.display = (kind === "judge") ? "block" : "none";
-  }
-
-  function getTTSForItem(it){
-    return it.tts || it.correct_ja || it.statement_ja || (it.answer ? it.answer : "");
-  }
-
-  function pickOne(){
-    if(itemsFiltered.length === 0) return null;
-    return itemsFiltered[rand(itemsFiltered.length)];
-  }
-
-  function resetOrderUI(){
-    orderState.picked = [];
-    ui.orderLine.textContent = "（點選下面片段組句）";
-    ui.orderPieces.innerHTML = "";
-  }
-
-  function markAnswered(){
-    revealed = true;
-    score.t++;
-    setScore();
-  }
-
-  function newQuestion(){
-    revealed = false;
-    setHint("");
-
-    current = pickOne();
-    if(!current){
-      setPrompt("（沒有題目）");
-      setSub("請確認 JSON 題庫");
-      ui.choices.innerHTML = "";
-      showArea("mcq");
-      return;
-    }
-
-    if(current.type === "mcq"){
-      showArea("mcq");
-      setSub("四選一：請選出正確對應");
-      const dir = current.direction || mcqDirection;
-
-      if(dir === "C2J"){
-        setPrompt(current.prompt_zh || "（缺 prompt_zh）");
-        const correct = current.correct_ja;
-        const wrong = (current.wrong_ja || []).slice();
-        const choices = shuffle([correct, ...wrong].slice(0, 4));
-        ui.choices.innerHTML = "";
-        choices.forEach(v=>{
-          const b=document.createElement("button");
-          b.className="choice";
-          b.textContent=v;
-          b.onclick=()=>{
-            if(revealed) return;
-            markAnswered();
-            if(v===correct){ score.c++; setScore(); b.classList.add("correct"); }
-            else { b.classList.add("wrong"); }
-            setHint(`正解：${correct}${current.explain ? "（" + current.explain + "）" : ""}`);
-            if(ttsEnabled) speakJP(getTTSForItem(current));
-          };
-          ui.choices.appendChild(b);
-        });
-      } else {
-        // J2C：把 ja 當題目，選中文（這類題若沒提供 prompt_ja / correct_zh 就不啟用）
-        const promptJa = current.correct_ja;
-        const correctZh = current.prompt_zh;
-        const wrongZh = (current.wrong_zh || []);
-        if(!promptJa || !correctZh || wrongZh.length < 3){
-          setPrompt("（此題缺少 J2C 資料：wrong_zh）");
-          setSub("請在 JSON 補上 wrong_zh（3 個）或改用 C2J");
-          ui.choices.innerHTML = "";
-          return;
-        }
-        setPrompt(promptJa);
-        const choices = shuffle([correctZh, ...wrongZh].slice(0,4));
-        ui.choices.innerHTML = "";
-        choices.forEach(v=>{
-          const b=document.createElement("button");
-          b.className="choice";
-          b.textContent=v;
-          b.onclick=()=>{
-            if(revealed) return;
-            markAnswered();
-            if(v===correctZh){ score.c++; setScore(); b.classList.add("correct"); }
-            else { b.classList.add("wrong"); }
-            setHint(`正解：${correctZh}${current.explain ? "（" + current.explain + "）" : ""}`);
-            if(ttsEnabled) speakJP(getTTSForItem(current));
-          };
-          ui.choices.appendChild(b);
-        });
-      }
-
-      if(ttsEnabled) setTimeout(()=> speakJP(getTTSForItem(current)), 120);
-      return;
-    }
-
-    if(current.type === "cloze"){
-      showArea("cloze");
-      setPrompt(current.prompt_zh || "（填空題）");
-      setSub("選詞填空：請選正確詞填入空格");
-      const sentence = current.sentence_ja || "＿＿＿";
-      const correct = current.answer;
-      const choices = (current.choices || []).slice();
-      ui.choices.innerHTML = "";
-
-      // 顯示句子（用 sub 來顯示更清楚）
-      ui.sub.textContent = sentence;
-
-      choices.forEach(v=>{
-        const b=document.createElement("button");
-        b.className="choice";
-        b.textContent=v;
-        b.onclick=()=>{
-          if(revealed) return;
-          markAnswered();
-          if(v===correct){ score.c++; setScore(); b.classList.add("correct"); }
-          else { b.classList.add("wrong"); }
-          const finalSentence = sentence.replace("＿＿＿", correct);
-          setHint(`正解：${correct} → ${finalSentence}${current.explain ? "（" + current.explain + "）" : ""}`);
-          if(ttsEnabled) speakJP(current.tts || finalSentence);
-        };
-        ui.choices.appendChild(b);
-      });
-
-      if(ttsEnabled) setTimeout(()=> speakJP(current.tts || sentence.replace("＿＿＿", correct)), 120);
-      return;
-    }
-
-    if(current.type === "order"){
-      showArea("order");
-      setPrompt(current.prompt_zh || "（句子排序）");
-      setSub("句子排序：點選片段組成正確句子");
-      resetOrderUI();
-
-      const pieces = (current.pieces || []).slice();
-      ui.orderPieces.innerHTML = "";
-      pieces.forEach(p=>{
-        const btn=document.createElement("button");
-        btn.className="pill";
-        btn.textContent=p;
-        btn.onclick=()=>{
-          if(revealed) return;
-          orderState.picked.push(p);
-          ui.orderLine.textContent = orderState.picked.join("");
-        };
-        ui.orderPieces.appendChild(btn);
-      });
-
-      if(ttsEnabled) setTimeout(()=> speakJP(getTTSForItem(current)), 150);
-      return;
-    }
-
-    if(current.type === "judge"){
-      showArea("judge");
-      setPrompt(current.prompt_zh || "（句型判斷）");
-      setSub("句型判斷：選擇 正確 / 錯誤");
-      ui.judgeSentence.textContent = current.statement_ja || "（缺 statement_ja）";
-      if(ttsEnabled) setTimeout(()=> speakJP(current.tts || ui.judgeSentence.textContent), 120);
-      return;
-    }
-
-    // fallback
-    showArea("mcq");
-    setPrompt("（未知題型）");
-    setSub("請檢查 JSON type");
-    ui.choices.innerHTML = "";
-  }
-
-  // order controls
-  ui.orderUndo.onclick = () => {
-    if(revealed) return;
-    orderState.picked.pop();
-    ui.orderLine.textContent = orderState.picked.length ? orderState.picked.join("") : "（點選下面片段組句）";
-  };
-  ui.orderClear.onclick = () => {
-    if(revealed) return;
-    orderState.picked = [];
-    ui.orderLine.textContent = "（點選下面片段組句）";
-  };
-  ui.orderCheck.onclick = () => {
-    if(revealed) return;
-    const ans = current.answer || [];
-    const ok = JSON.stringify(orderState.picked) === JSON.stringify(ans);
-    markAnswered();
-    if(ok){ score.c++; setScore(); setHint(`✅ 正確：${ans.join("")}${current.explain ? "（" + current.explain + "）" : ""}`); }
-    else { setHint(`❌ 不正確。正解：${ans.join("")}${current.explain ? "（" + current.explain + "）" : ""}`); }
-    if(ttsEnabled) speakJP(current.tts || ans.join(""));
-  };
-
-  // judge controls
-  ui.judgeTrue.onclick = () => {
-    if(revealed) return;
-    markAnswered();
-    const ok = current.answer === true;
-    if(ok){ score.c++; setScore(); setHint(`✅ 正確${current.explain ? "（" + current.explain + "）" : ""}`); }
-    else { setHint(`❌ 錯誤。${current.explain ? current.explain : ""}`); }
-    if(ttsEnabled) speakJP(current.tts || (current.statement_ja || ""));
-  };
-  ui.judgeFalse.onclick = () => {
-    if(revealed) return;
-    markAnswered();
-    const ok = current.answer === false;
-    if(ok){ score.c++; setScore(); setHint(`✅ 正確${current.explain ? "（" + current.explain + "）" : ""}`); }
-    else { setHint(`❌ 錯誤。${current.explain ? current.explain : ""}`); }
-    if(ttsEnabled) speakJP(current.tts || (current.statement_ja || ""));
-  };
 
   return {
-    setItems(allItems){
-      itemsAll = Array.isArray(allItems) ? allItems : [];
-      itemsFiltered = itemsAll.slice();
-    },
-    setFilter({ type }){
-      if(type === "mix"){ itemsFiltered = itemsAll.slice(); return; }
-      itemsFiltered = itemsAll.filter(it => it.type === type);
-    },
-    setTTS(v){ ttsEnabled = !!v; },
-    setMCQDirection(dir){ mcqDirection = dir; },
-    resetScore(){ score={c:0,t:0}; setScore(); },
-    play(){
-      if(!current) return;
-      const t = getTTSForItem(current);
-      if(t) speakJP(t);
-    },
-    next(){ newQuestion(); },
-    init(){ setScore(); newQuestion(); }
+    setBank: (newBank) => { opts.bank.splice(0, opts.bank.length, ...(newBank||[])); newQ(); },
+    getState: () => ({ direction, ttsEnabled, score })
   };
 }
 
 /* ============================================================
-   載入 JSON
+   JSON 題庫載入（你的結構：banks.greetings / banks.words）
 ============================================================ */
-async function loadGuideData(){
-  const res = await fetch("./guide_data.json", { cache: "no-store" });
-  if(!res.ok) throw new Error("HTTP " + res.status);
+const DATA_URL = "./guide_data.json"; // 你可改檔名
+document.getElementById("dbUrlLabel").textContent = DATA_URL;
+
+async function loadGuideDB(){
+  const res = await fetch(DATA_URL, { cache: "no-store" });
+  if(!res.ok) throw new Error(`讀取失敗：${res.status} ${res.statusText}`);
   return await res.json();
 }
 
-/* ============================================================
-   啟動：問候/單字/用法（題型版）
-============================================================ */
-let grammarEngine = null;
+function safeBankArray(db, key){
+  return (db && db.banks && Array.isArray(db.banks[key])) ? db.banks[key] : [];
+}
 
-function fillSelect(sel, options){
-  sel.innerHTML = "";
-  options.forEach(({value,label})=>{
-    const opt=document.createElement("option");
-    opt.value=value;
-    opt.textContent=label;
-    sel.appendChild(opt);
+/* ============================================================
+   啟動：問候語 / 單字 小測驗（先用預設，載入後再覆蓋）
+============================================================ */
+const GREETING_BANK = [
+  { zh: "你好", ja: "こんにちは" },
+  { zh: "早安", ja: "おはようございます" },
+  { zh: "晚上好", ja: "こんばんは" },
+  { zh: "晚安", ja: "おやすみなさい" }
+];
+
+const WORD_BANK = [
+  { zh: "蘋果", ja: "りんご" },
+  { zh: "橘子", ja: "みかん" },
+  { zh: "鯊魚", ja: "サメ" },
+  { zh: "筆記本", ja: "ノート" }
+];
+
+const greetingQuiz = createBilingualQuiz({
+  bank: GREETING_BANK,
+  ids: { prompt:"greetPrompt", sub:"greetSub", choices:"greetChoices", score:"greetScore", hint:"greetHint" },
+  btns: { dirA:"greetC2JBtn", dirB:"greetJ2CBtn", ttsOff:"greetTTSOffBtn", ttsOn:"greetTTSOnBtn", play:"greetPlayBtn", next:"greetNextBtn", reset:"greetResetBtn" },
+  defaultDirection: "C2J",
+  titleForHint: "對應"
+});
+
+const wordQuiz = createBilingualQuiz({
+  bank: WORD_BANK,
+  ids: { prompt:"wordPrompt", sub:"wordSub", choices:"wordChoices", score:"wordScore", hint:"wordHint" },
+  btns: { dirA:"wordC2JBtn", dirB:"wordJ2CBtn", ttsOff:"wordTTSOffBtn", ttsOn:"wordTTSOnBtn", play:"wordPlayBtn", next:"wordNextBtn", reset:"wordResetBtn" },
+  defaultDirection: "C2J",
+  titleForHint: "對應"
+});
+
+/* ============================================================
+   新增：素材朗讀（只取 greetings + words 的 ja）
+   規則：必須含假名(平/片)才朗讀，避免純漢字中文被念出來
+============================================================ */
+const KANA_RE = /[\u3040-\u309F\u30A0-\u30FF]/; // hira+kata
+function hasKana(s){
+  return KANA_RE.test(String(s || ""));
+}
+
+function buildReadingList(db){
+  const list = [];
+  const g = safeBankArray(db, "greetings");
+  const w = safeBankArray(db, "words");
+
+  function pushJa(item){
+    const ja = (item && item.ja ? String(item.ja).trim() : "");
+    if(!ja) return;
+    if(!hasKana(ja)) return; // 只要純漢字就跳過
+    if(!list.includes(ja)) list.push(ja);
+  }
+  g.forEach(pushJa);
+  w.forEach(pushJa);
+
+  return list;
+}
+
+let READ_LIST = [];
+let readIdx = 0;
+let readPlaying = false;
+let readAutoNext = true;
+let readLoop = true;
+
+const readNowEl = document.getElementById("readNow");
+const readMetaEl = document.getElementById("readMeta");
+const readProgressEl = document.getElementById("readProgress");
+
+function renderRead(){
+  if(READ_LIST.length === 0){
+    readNowEl.textContent = "（無可朗讀素材：可能都被判定為純漢字或題庫為空）";
+    readMetaEl.textContent = "—";
+    readProgressEl.textContent = `0 / 0`;
+    return;
+  }
+  readNowEl.textContent = READ_LIST[readIdx];
+  readMetaEl.textContent = `來源：greetings + words • 素材含假名才會朗讀`;
+  readProgressEl.textContent = `${readIdx+1} / ${READ_LIST.length}`;
+}
+
+function stopRead(){
+  readPlaying = false;
+  document.getElementById("readPlayBtn").textContent = "▶︎ 播放";
+  if("speechSynthesis" in window) window.speechSynthesis.cancel();
+}
+
+function speakJPWithEnd(text, onend){
+  if(!("speechSynthesis" in window)) {
+    alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
+    return;
+  }
+  window.speechSynthesis.cancel();
+
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ja-JP";
+  u.rate = 0.9;
+  u.pitch = 1.0;
+
+  const voices = window.speechSynthesis.getVoices?.() || [];
+  const jp = voices.find(v => (v.lang || "").toLowerCase().startsWith("ja"));
+  if(jp) u.voice = jp;
+
+  u.onend = () => { if(typeof onend === "function") onend(); };
+  window.speechSynthesis.speak(u);
+}
+
+function playRead(){
+  if(READ_LIST.length === 0) return;
+  readPlaying = true;
+  document.getElementById("readPlayBtn").textContent = "⏸ 暫停";
+  const text = READ_LIST[readIdx];
+
+  speakJPWithEnd(text, () => {
+    if(!readPlaying || !readAutoNext) return;
+
+    // 下一句
+    if(readIdx < READ_LIST.length - 1){
+      readIdx++;
+      renderRead();
+      setTimeout(()=> playRead(), 120);
+    } else {
+      // 到尾端
+      if(readLoop){
+        readIdx = 0;
+        renderRead();
+        setTimeout(()=> playRead(), 120);
+      } else {
+        stopRead();
+      }
+    }
   });
 }
 
-(async function initAll(){
-  updateScore();
-  newQuestion();
-  setSRStatus(SpeechRecognition ? "未啟動" : "不支援");
+/* 朗讀 UI events */
+document.getElementById("readPrevBtn").onclick = () => {
+  if(READ_LIST.length === 0) return;
+  readIdx = (readIdx - 1 + READ_LIST.length) % READ_LIST.length;
+  renderRead();
+  if(readPlaying) playRead();
+};
 
-  try{
-    const data = await loadGuideData();
+document.getElementById("readNextBtn").onclick = () => {
+  if(READ_LIST.length === 0) return;
+  readIdx = (readIdx + 1) % READ_LIST.length;
+  renderRead();
+  if(readPlaying) playRead();
+};
 
-    // greetings + words (四選一引擎)
-    createBilingualQuiz({
-      bank: data?.banks?.greetings || [],
-      ids: { prompt:"greetPrompt", sub:"greetSub", choices:"greetChoices", score:"greetScore", hint:"greetHint" },
-      btns: { dirA:"greetC2JBtn", dirB:"greetJ2CBtn", ttsOff:"greetTTSOffBtn", ttsOn:"greetTTSOnBtn", play:"greetPlayBtn", next:"greetNextBtn", reset:"greetResetBtn" },
-      defaultDirection:"C2J",
-      titleForHint:"對應"
-    });
-
-    createBilingualQuiz({
-      bank: data?.banks?.words || [],
-      ids: { prompt:"wordPrompt", sub:"wordSub", choices:"wordChoices", score:"wordScore", hint:"wordHint" },
-      btns: { dirA:"wordC2JBtn", dirB:"wordJ2CBtn", ttsOff:"wordTTSOffBtn", ttsOn:"wordTTSOnBtn", play:"wordPlayBtn", next:"wordNextBtn", reset:"wordResetBtn" },
-      defaultDirection:"C2J",
-      titleForHint:"對應"
-    });
-
-    // grammar topics
-    const topics = (data?.reserved_grammar_sets?.topics || []).filter(t => Array.isArray(t.items) && t.items.length > 0);
-    if(topics.length === 0) throw new Error("reserved_grammar_sets.topics 沒有可用 items");
-
-    const topicSel = document.getElementById("gramTopicSel");
-    fillSelect(topicSel, topics.map((t,idx)=>({ value:String(idx), label:t.title || t.id || ("Topic "+(idx+1)) })));
-
-    const typeSel = document.getElementById("gramTypeSel");
-
-    // init engine
-    grammarEngine = createGrammarEngine({
-      prompt: document.getElementById("gramPrompt"),
-      sub: document.getElementById("gramSub"),
-      choices: document.getElementById("gramChoices"),
-      score: document.getElementById("gramScore"),
-      hint: document.getElementById("gramHint"),
-      orderArea: document.getElementById("gramOrderArea"),
-      orderLine: document.getElementById("gramOrderLine"),
-      orderPieces: document.getElementById("gramOrderPieces"),
-      orderUndo: document.getElementById("gramOrderUndoBtn"),
-      orderClear: document.getElementById("gramOrderClearBtn"),
-      orderCheck: document.getElementById("gramOrderCheckBtn"),
-      judgeArea: document.getElementById("gramJudgeArea"),
-      judgeSentence: document.getElementById("gramJudgeSentence"),
-      judgeTrue: document.getElementById("gramJudgeTrueBtn"),
-      judgeFalse: document.getElementById("gramJudgeFalseBtn")
-    });
-
-    function applyTopicAndType(){
-      const idx = parseInt(topicSel.value, 10);
-      const topic = topics[idx] || topics[0];
-      grammarEngine.setItems(topic.items);
-
-      const t = typeSel.value;
-      grammarEngine.setFilter({ type: t });
-
-      grammarEngine.init();
-    }
-
-    topicSel.onchange = applyTopicAndType;
-    typeSel.onchange = applyTopicAndType;
-
-    // direction buttons only affect mcq
-    document.getElementById("gramC2JBtn").onclick = () => {
-      document.getElementById("gramC2JBtn").classList.add("active");
-      document.getElementById("gramJ2CBtn").classList.remove("active");
-      grammarEngine.setMCQDirection("C2J");
-      grammarEngine.next();
-    };
-    document.getElementById("gramJ2CBtn").onclick = () => {
-      document.getElementById("gramJ2CBtn").classList.add("active");
-      document.getElementById("gramC2JBtn").classList.remove("active");
-      grammarEngine.setMCQDirection("J2C");
-      grammarEngine.next();
-    };
-
-    // tts buttons
-    document.getElementById("gramTTSOffBtn").onclick = () => {
-      document.getElementById("gramTTSOffBtn").classList.add("active");
-      document.getElementById("gramTTSOnBtn").classList.remove("active");
-      grammarEngine.setTTS(false);
-    };
-    document.getElementById("gramTTSOnBtn").onclick = () => {
-      document.getElementById("gramTTSOnBtn").classList.add("active");
-      document.getElementById("gramTTSOffBtn").classList.remove("active");
-      grammarEngine.setTTS(true);
-      grammarEngine.play();
-    };
-
-    // actions
-    document.getElementById("gramPlayBtn").onclick = () => grammarEngine.play();
-    document.getElementById("gramNextBtn").onclick = () => grammarEngine.next();
-    document.getElementById("gramResetBtn").onclick = () => { grammarEngine.resetScore(); grammarEngine.next(); };
-
-    // initial apply
-    topicSel.value = "0";
-    typeSel.value = "mix";
-    applyTopicAndType();
-
-  } catch(err){
-    console.error(err);
-    alert("載入/初始化失敗：\n" + (err?.message || err));
-    document.getElementById("gramPrompt").textContent = "（載入失敗）";
-    document.getElementById("gramSub").textContent = "請確認 guide_data.json 與路徑";
+document.getElementById("readPlayBtn").onclick = () => {
+  if(READ_LIST.length === 0) return;
+  if(readPlaying){
+    stopRead();
+  } else {
+    playRead();
   }
-})();
+};
+
+document.getElementById("readStopBtn").onclick = () => stopRead();
+
+document.getElementById("readReloadBtn").onclick = async () => {
+  stopRead();
+  await hydrateFromJSON();
+};
+
+document.getElementById("readLoopBtn").onclick = () => {
+  readLoop = true;
+  document.getElementById("readLoopBtn").classList.add("active");
+  document.getElementById("readOnceBtn").classList.remove("active");
+};
+
+document.getElementById("readOnceBtn").onclick = () => {
+  readLoop = false;
+  document.getElementById("readOnceBtn").classList.add("active");
+  document.getElementById("readLoopBtn").classList.remove("active");
+};
+
+document.getElementById("readAutoOnBtn").onclick = () => {
+  readAutoNext = true;
+  document.getElementById("readAutoOnBtn").classList.add("active");
+  document.getElementById("readAutoOffBtn").classList.remove("active");
+};
+document.getElementById("readAutoOffBtn").onclick = () => {
+  readAutoNext = false;
+  document.getElementById("readAutoOffBtn").classList.add("active");
+  document.getElementById("readAutoOnBtn").classList.remove("active");
+};
 
 /* ============================================================
-   🎧 日文素材朗讀：從 guide_data.json 抽取所有日文文字 → 播放清單
-   - 不影響你原本功能
+   從 JSON 覆蓋題庫（問候語、單字）+ 建立朗讀清單
 ============================================================ */
-(function setupJPReader(){
-  // 你 JSON 檔名若不同，改這裡
-  const DATA_URL = "guide_data.json";
+async function hydrateFromJSON(){
+  try{
+    const db = await loadGuideDB();
 
-  const el = (id)=>document.getElementById(id);
+    const g = safeBankArray(db, "greetings");
+    const w = safeBankArray(db, "words");
 
-  const ui = {
-    loadBtn: el("jpLoadBtn"),
-    playBtn: el("jpPlayBtn"),
-    pauseBtn: el("jpPauseBtn"),
-    stopBtn: el("jpStopBtn"),
-    prevBtn: el("jpPrevBtn"),
-    nextBtn: el("jpNextBtn"),
-    downloadBtn: el("jpDownloadBtn"),
-    status: el("jpStatus"),
-    progress: el("jpProgress"),
-    now: el("jpNow"),
-    preview: el("jpPreview"),
-    rate: el("jpRate"),
-    rateVal: el("jpRateVal"),
-    gap: el("jpGap"),
-    gapVal: el("jpGapVal"),
-    shuffle: el("jpShuffle"),
-    loop: el("jpLoop"),
-    dedup: el("jpDedup")
-  };
-
-   // ---- 只收「含假名」的日文：平假名/片假名必須至少出現 1 個
-  //      若是純漢字（沒有任何假名），一律排除，避免中文誤入
-  const KANA_RE = /[\u3040-\u309F\u30A0-\u30FF]/;              // 平/片假名
-  const KANJI_RE = /[\u3400-\u4DBF\u4E00-\u9FFF]/;            // CJK 漢字（含擴展）
-  const JP_PUNC_RE = /[。、「」『』（）\(\)・ー！!？?\u3000]/; // 日文常見符號（可有可無）
-
-  function looksJapanese(s){
-    if(!s) return false;
-    const t = String(s).trim();
-    if(t.length < 2) return false;
-
-    // 必須含至少一個假名（平/片）
-    if(!KANA_RE.test(t)) return false;
-
-    // 排除「看起來像亂碼/單一符號」等極短內容
-    const cleaned = t.replace(/\s+/g, "").replace(JP_PUNC_RE, "");
-    if(cleaned.length < 2) return false;
-
-    // ✅ 有假名就通過（可同時含漢字/羅馬字/數字）
-    // ❌ 純漢字因為沒有假名，上面已經擋掉
-
-        // （可選）保守比例：假名至少占「字元(去空白)」的 8%，避免超長中文句只塞一點假名就進來
-    const noSpace = t.replace(/\s+/g, "");
-    const kanaCount = (noSpace.match(/[\u3040-\u309F\u30A0-\u30FF]/g) || []).length;
-    if(kanaCount / Math.max(1, noSpace.length) < 0.08) return false;
- 
-    
-    return true;
-  }
-
-
-  // ---- 長句切段：避免某些瀏覽器對 Utterance 太長會不唸
-  function splitJPText(text, maxLen=120){
-    const t = String(text).replace(/\s+/g, " ").trim();
-    if(t.length <= maxLen) return [t];
-
-    // 先用日文常見標點切
-    const chunks = [];
-    const parts = t.split(/(?<=[。！？!?、，,;；:：])\s*/);
-    let buf = "";
-    for(const p of parts){
-      if(!p) continue;
-      if((buf + p).length <= maxLen){
-        buf += p;
-      } else {
-        if(buf) chunks.push(buf.trim());
-        buf = p;
-      }
+    // 覆蓋小測驗題庫
+    if(Array.isArray(g) && g.length >= 4){
+      GREETING_BANK.splice(0, GREETING_BANK.length, ...g);
     }
-    if(buf) chunks.push(buf.trim());
-
-    // 若還是過長，再硬切
-    const final = [];
-    for(const c of chunks){
-      if(c.length <= maxLen) final.push(c);
-      else {
-        for(let i=0;i<c.length;i+=maxLen){
-          final.push(c.slice(i, i+maxLen));
-        }
-      }
-    }
-    return final.filter(Boolean);
-  }
-
-  // ---- 深度遞迴掃描 JSON：把所有日文字串抽出
-  function extractJapaneseStrings(any){
-    const out = [];
-    const seenObj = new Set();
-
-    function walk(v){
-      if(v === null || v === undefined) return;
-
-      // 防循環
-      if(typeof v === "object"){
-        if(seenObj.has(v)) return;
-        seenObj.add(v);
-      }
-
-      if(typeof v === "string"){
-        const s = v.trim();
-        if(looksJapanese(s)) out.push(s);
-        return;
-      }
-
-      if(Array.isArray(v)){
-        for(const x of v) walk(x);
-        return;
-      }
-
-      if(typeof v === "object"){
-        for(const k of Object.keys(v)){
-          const val = v[k];
-
-          // 常見：*_ja / ja / tts / sentence_ja / correct_ja 之類 key，優先抽
-          if(typeof val === "string"){
-            const s = val.trim();
-            // 只要像日文就收；如果 key 明確是 ja 也收
-            if(looksJapanese(s) || /(^|_)ja$|ja_|_ja_|tts/i.test(k)) {
-              if(looksJapanese(s)) out.push(s);
-            }
-          } else {
-            walk(val);
-          }
-        }
-        return;
-      }
+    if(Array.isArray(w) && w.length >= 4){
+      WORD_BANK.splice(0, WORD_BANK.length, ...w);
     }
 
-    walk(any);
-    return out;
+    // 重新出題（用新的 bank）
+    // 直接重置分數的話可能不想；所以只下一題刷新即可
+    document.getElementById("greetNextBtn").click();
+    document.getElementById("wordNextBtn").click();
+
+    // 建立朗讀清單
+    READ_LIST = buildReadingList(db);
+    readIdx = 0;
+    renderRead();
+
+  }catch(err){
+    console.error(err);
+    alert("JSON 載入失敗：\n" + err.message + "\n\n請確認 guide_data.json 的路徑與 JSON 格式。");
+    READ_LIST = [];
+    renderRead();
   }
+}
 
-  // ---- 朗讀播放器狀態
-  let rawList = [];       // 未去重/未洗牌
-  let playList = [];      // 目前播放順序
-  let idx = 0;
-  let playing = false;
-  let paused = false;
-  let currentUtter = null;
-
-  function setButtons(){
-    const hasList = playList.length > 0;
-    ui.playBtn.disabled = !hasList || playing;
-    ui.pauseBtn.disabled = !hasList || !playing;
-    ui.stopBtn.disabled = !hasList || (!playing && !paused);
-    ui.prevBtn.disabled = !hasList;
-    ui.nextBtn.disabled = !hasList;
-    ui.downloadBtn.disabled = !hasList;
-  }
-
-  function setStatus(t){ ui.status.textContent = t; }
-  function setProgress(){
-    ui.progress.textContent = `${playList.length ? (idx+1) : 0} / ${playList.length}`;
-  }
-
-  function rebuildPlayList(){
-    let list = [...rawList];
-
-    // 去重
-    if(ui.dedup.checked){
-      const s = new Set();
-      list = list.filter(x => {
-        const key = x.replace(/\s+/g, " ").trim();
-        if(s.has(key)) return false;
-        s.add(key);
-        return true;
-      });
-    }
-
-    // 隨機
-    if(ui.shuffle.checked){
-      list = shuffle(list);
-    }
-
-    playList = list;
-    idx = 0;
-    setProgress();
-
-    // preview
-    const preview = playList.slice(0, 80).map((s,i)=>`${i+1}. ${s}`).join("\n");
-    ui.preview.value = preview || "";
-    ui.now.textContent = "（空）";
-    setButtons();
-  }
-
-  async function loadMaterials(){
-    try{
-      setStatus("載入中…");
-      const res = await fetch(DATA_URL, { cache: "no-store" });
-      if(!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-
-      rawList = extractJapaneseStrings(data)
-        // 避免單一符號 / 只有片段的「ー」之類
-        .map(s => s.replace(/\s+/g, " ").trim())
-        .filter(s => s.length >= 2);
-
-      rebuildPlayList();
-      setStatus(`已載入：${rawList.length} 筆（日文素材）`);
-    }catch(e){
-      console.error(e);
-      setStatus(`載入失敗：${String(e.message || e)}`);
-      rawList = [];
-      playList = [];
-      idx = 0;
-      ui.preview.value = "";
-      ui.now.textContent = "（空）";
-      setButtons();
-    }
-  }
-
-  function stopSpeaking(){
-    if("speechSynthesis" in window){
-      window.speechSynthesis.cancel();
-    }
-    currentUtter = null;
-    playing = false;
-    paused = false;
-    setButtons();
-  }
-
-  function speakOne(text, onDone){
-    if(!("speechSynthesis" in window)){
-      alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
-      return;
-    }
-
-    // 使用與你原本 speakJP 同樣策略，但要可調語速
-    const rate = parseFloat(ui.rate.value || "0.9");
-    const chunks = splitJPText(text, 120);
-    let ci = 0;
-
-    function speakChunk(){
-      if(ci >= chunks.length){
-        onDone?.();
-        return;
-      }
-      const u = new SpeechSynthesisUtterance(chunks[ci]);
-      u.lang = "ja-JP";
-      u.rate = rate;
-      u.pitch = 1.0;
-
-      const voices = window.speechSynthesis.getVoices?.() || [];
-      const jp = voices.find(v => (v.lang || "").toLowerCase().startsWith("ja"));
-      if(jp) u.voice = jp;
-
-      currentUtter = u;
-
-      u.onend = () => {
-        ci++;
-        speakChunk();
-      };
-      u.onerror = () => {
-        ci++;
-        speakChunk();
-      };
-
-      window.speechSynthesis.speak(u);
-    }
-
-    // iOS/Chrome 有時需要 cancel 再 speak 才穩
-    window.speechSynthesis.cancel();
-    speakChunk();
-  }
-
-  function playCurrent(){
-    if(playList.length === 0) return;
-
-    const text = playList[idx];
-    ui.now.textContent = text;
-    setProgress();
-
-    playing = true;
-    paused = false;
-    setButtons();
-    setStatus("播放中…");
-
-    speakOne(text, () => {
-      const gapMs = Math.round(parseFloat(ui.gap.value || "0") * 1000);
-
-      // 播完自動下一則
-      setTimeout(() => {
-        if(!playing) return;
-
-        idx++;
-        if(idx >= playList.length){
-          if(ui.loop.checked){
-            idx = 0;
-          } else {
-            setStatus("播放完畢");
-            stopSpeaking();
-            return;
-          }
-        }
-        playCurrent();
-      }, gapMs);
-    });
-  }
-
-  function pause(){
-    if(!("speechSynthesis" in window)) return;
-    if(!playing) return;
-    try{
-      window.speechSynthesis.pause();
-      paused = true;
-      playing = false;
-      setStatus("已暫停");
-      setButtons();
-    }catch(_){}
-  }
-
-  function resume(){
-    if(!("speechSynthesis" in window)) return;
-    if(playing) return;
-    if(!paused) return;
-    try{
-      window.speechSynthesis.resume();
-      paused = false;
-      playing = true;
-      setStatus("播放中…");
-      setButtons();
-    }catch(_){}
-  }
-
-  function next(){
-    if(playList.length === 0) return;
-    stopSpeaking();
-    idx = (idx + 1) % playList.length;
-    setProgress();
-    playCurrent();
-  }
-
-  function prev(){
-    if(playList.length === 0) return;
-    stopSpeaking();
-    idx = (idx - 1 + playList.length) % playList.length;
-    setProgress();
-    playCurrent();
-  }
-
-  function downloadList(){
-    const payload = {
-      generated_at: new Date().toISOString(),
-      source: DATA_URL,
-      count: playList.length,
-      items: playList
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "jp_playlist.json";
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }
-
-  // ---- UI 綁定
-  ui.rate.addEventListener("input", ()=> ui.rateVal.textContent = Number(ui.rate.value).toFixed(2));
-  ui.gap.addEventListener("input", ()=> ui.gapVal.textContent = ui.gap.value);
-
-  ui.shuffle.addEventListener("change", ()=> rebuildPlayList());
-  ui.dedup.addEventListener("change", ()=> rebuildPlayList());
-
-  ui.loadBtn.onclick = () => loadMaterials();
-
-  ui.playBtn.onclick = () => {
-    if(paused){
-      resume();
-      return;
-    }
-    stopSpeaking();
-    playCurrent();
-  };
-
-  ui.pauseBtn.onclick = () => pause();
-
-  ui.stopBtn.onclick = () => {
-    stopSpeaking();
-    setStatus("已停止");
-  };
-
-  ui.nextBtn.onclick = () => next();
-  ui.prevBtn.onclick = () => prev();
-
-  ui.downloadBtn.onclick = () => downloadList();
-
-  // ---- 初始載入
-  ui.rateVal.textContent = Number(ui.rate.value).toFixed(2);
-  ui.gapVal.textContent = ui.gap.value;
-  setButtons();
-  loadMaterials();
-})();
-
-
-  
+/* ============================================================
+   初始化
+============================================================ */
+updateScore();
+newQuestion();
+setSRStatus(SpeechRecognition ? "未啟動" : "不支援");
+renderRead();
+hydrateFromJSON();
 </script>
 </body>
 </html>
