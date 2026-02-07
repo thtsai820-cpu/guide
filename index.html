@@ -288,7 +288,9 @@ select:focus { border-color: #111827; }
       <div id="wordHint" class="hint"></div>
     </div>
   </div>
-    <!-- 新增：日文素材朗讀播放器 -->
+
+  
+  <!-- 新增：日文素材朗讀播放器 -->
   <div class="card" style="margin-top:12px;">
     <div class="sectionTitle">🎧 日文素材朗讀（從 JSON 自動抽取） <span class="badge">上班聽</span></div>
     <div class="sectionDesc">
@@ -1234,17 +1236,36 @@ function fillSelect(sel, options){
     dedup: el("jpDedup")
   };
 
-  // ---- 判斷「是不是日文」：包含平/片假名或漢字就算
-  const JP_RE = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/;
+   // ---- 只收「含假名」的日文：平假名/片假名必須至少出現 1 個
+  //      若是純漢字（沒有任何假名），一律排除，避免中文誤入
+  const KANA_RE = /[\u3040-\u309F\u30A0-\u30FF]/;              // 平/片假名
+  const KANJI_RE = /[\u3400-\u4DBF\u4E00-\u9FFF]/;            // CJK 漢字（含擴展）
+  const JP_PUNC_RE = /[。、「」『』（）\(\)・ー！!？?\u3000]/; // 日文常見符號（可有可無）
 
   function looksJapanese(s){
     if(!s) return false;
     const t = String(s).trim();
-    if(t.length < 1) return false;
-    // 避免純英數或純符號
-    if(!JP_RE.test(t)) return false;
+    if(t.length < 2) return false;
+
+    // 必須含至少一個假名（平/片）
+    if(!KANA_RE.test(t)) return false;
+
+    // 排除「看起來像亂碼/單一符號」等極短內容
+    const cleaned = t.replace(/\s+/g, "").replace(JP_PUNC_RE, "");
+    if(cleaned.length < 2) return false;
+
+    // ✅ 有假名就通過（可同時含漢字/羅馬字/數字）
+    // ❌ 純漢字因為沒有假名，上面已經擋掉
+
+        // （可選）保守比例：假名至少占「字元(去空白)」的 8%，避免超長中文句只塞一點假名就進來
+    const noSpace = t.replace(/\s+/g, "");
+    const kanaCount = (noSpace.match(/[\u3040-\u309F\u30A0-\u30FF]/g) || []).length;
+    if(kanaCount / Math.max(1, noSpace.length) < 0.08) return false;
+ 
+    
     return true;
   }
+
 
   // ---- 長句切段：避免某些瀏覽器對 Utterance 太長會不唸
   function splitJPText(text, maxLen=120){
