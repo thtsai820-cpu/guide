@@ -21,7 +21,7 @@ body { margin: 0; }
 .group { min-width: 170px; }
 .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
 
-.seg { display: inline-flex; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
+.seg { display: inline-flex; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; flex-wrap: wrap; }
 .seg button { border: 0; background: white; padding: 8px 10px; cursor: pointer; }
 .seg .active { background: #111827; color: white; }
 
@@ -62,7 +62,7 @@ textarea:focus { border-color: #111827; }
 .final { color: #111827; font-weight: 800; }
 .note { margin-top: 10px; padding: 10px 12px; border: 1px dashed #d1d5db; border-radius: 12px; background: #fff; }
 
-.sectionTitle { font-weight: 900; font-size: 18px; display:flex; gap:10px; align-items:center; }
+.sectionTitle { font-weight: 900; font-size: 18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 .sectionDesc { margin-top: 4px; color:#6b7280; font-size: 12px; line-height:1.5; }
 .hr { height:1px; background:#e5e7eb; margin: 10px 0; border:0; }
 
@@ -166,6 +166,51 @@ textarea:focus { border-color: #111827; }
 
   </div>
 
+  <!-- 素材朗讀（問候語＋單字） -->
+  <div class="card" style="margin-top:12px;">
+    <div class="sectionTitle">🎧 素材朗讀（問候語＋單字） <span class="badge">只讀 JSON 題庫</span></div>
+    <div class="sectionDesc">
+      朗讀來源：<span class="kbd">guide_data.json</span> 裡的 <span class="kbd">banks.greetings</span> 與 <span class="kbd">banks.words</span>（只朗讀 ja）。
+    </div>
+    <hr class="hr" />
+
+    <div class="row">
+      <div class="group">
+        <div class="label">範圍</div>
+        <div class="seg">
+          <button id="rdBothBtn" class="active">問候語＋單字</button>
+          <button id="rdGreetBtn">只問候語</button>
+          <button id="rdWordBtn">只單字</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="label">播放狀態</div>
+        <div class="badge" id="rdStatus">待機</div>
+      </div>
+
+      <div class="group">
+        <div class="label">進度</div>
+        <div class="kpi" id="rdProg">0 / 0</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="rdStartBtn" class="primary">▶︎ 開始朗讀</button>
+      <button id="rdPauseBtn" class="ghost" disabled>⏸ 暫停</button>
+      <button id="rdStopBtn" class="danger" disabled>⏹ 停止</button>
+      <button id="rdNextBtn" class="playBtn" disabled>⏭ 下一句</button>
+    </div>
+
+    <div class="note">
+      <div class="small">目前朗讀：</div>
+      <div id="rdNow" class="final">（空）</div>
+      <div class="small" id="rdNowMeta">（空）</div>
+    </div>
+
+    <div class="note small" id="dataStatus">題庫狀態：尚未載入 JSON</div>
+  </div>
+
   <!-- 問候語小測驗 -->
   <div class="card" style="margin-top:12px;">
     <div class="sectionTitle">🧩 問候語小測驗（中⇄日） <span class="badge">可擴充</span></div>
@@ -213,11 +258,11 @@ textarea:focus { border-color: #111827; }
     </div>
   </div>
 
-  <!-- 單字小測驗 -->
+  <!-- 單字小測驗（emoji 示意圖） -->
   <div class="card" style="margin-top:12px;">
-    <div class="sectionTitle">🧩 單字小測驗（中⇄日） <span class="badge">題目旁有 emoji 示意圖</span></div>
+    <div class="sectionTitle">🧩 單字小測驗（中⇄日） <span class="badge">emoji 示意圖</span></div>
     <div class="sectionDesc">
-      遊戲玩法同上。你未來要加更多單字，只要把資料加入 JSON 即可。若該筆有 icon，會顯示在題目旁。
+      單字題庫完全來自 JSON。若 JSON 尚未載入成功，此區塊會顯示提示並暫停出題。
     </div>
     <hr class="hr" />
 
@@ -245,10 +290,11 @@ textarea:focus { border-color: #111827; }
     </div>
 
     <div style="margin-top:10px;">
-      <div id="wordPromptWrap" class="row" style="justify-content:center; align-items:center; gap:10px;">
+      <div class="row" style="justify-content:center; align-items:center; gap:10px;">
         <div id="wordIcon" style="font-size:44px; line-height:1;">🧩</div>
-        <div id="wordPrompt" class="quizPromptSm" style="margin:0;">蘋果</div>
+        <div id="wordPrompt" class="quizPromptSm" style="margin:0;">（尚未載入）</div>
       </div>
+
       <div id="wordSub" class="quizSubSm">請選出正確對應</div>
       <div id="wordChoices" class="choices"></div>
 
@@ -273,7 +319,7 @@ function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
 function uniqPush(arr, v){ if(!arr.includes(v)) arr.push(v); }
 
 /* ============================================================
-   TTS：唸日文（假名/日文句子）
+   TTS：唸日文
 ============================================================ */
 function speakJP(text){
   if(!("speechSynthesis" in window)) {
@@ -327,7 +373,7 @@ function updateScore(){
   document.getElementById("scoreBox").textContent = `${score.c} / ${score.t}`;
 }
 
-function renderKanaChoices(arr){
+function renderChoices(arr){
   const box=document.getElementById("choices");
   box.innerHTML="";
 
@@ -357,7 +403,7 @@ function renderKanaChoices(arr){
   });
 }
 
-function newKanaQuestion(){
+function newQuestion(){
   revealed = false;
   document.getElementById("hint").textContent = "";
 
@@ -377,7 +423,7 @@ function newKanaQuestion(){
       const rr = KANA[rand(KANA.length)][2];
       uniqPush(opts, rr);
     }
-    renderKanaChoices(shuffle(opts));
+    renderChoices(shuffle(opts));
 
   } else if(mode==="r2k"){
     promptEl.textContent = r;
@@ -391,7 +437,7 @@ function newKanaQuestion(){
         : KANA[rand(KANA.length)][1];
       uniqPush(opts, kk2);
     }
-    renderKanaChoices(shuffle(opts));
+    renderChoices(shuffle(opts));
 
   } else { // l2k
     promptEl.textContent = "🔊";
@@ -405,7 +451,7 @@ function newKanaQuestion(){
         : KANA[rand(KANA.length)][1];
       uniqPush(opts, kk2);
     }
-    renderKanaChoices(shuffle(opts));
+    renderChoices(shuffle(opts));
     setTimeout(()=> speakJP(kanaLabel(current)), 120);
   }
 }
@@ -421,41 +467,41 @@ hiraBtn.onclick=()=>{
   script="hira";
   hiraBtn.classList.add("active");
   kataBtn.classList.remove("active");
-  newKanaQuestion();
+  newQuestion();
 };
 kataBtn.onclick=()=>{
   script="kata";
   kataBtn.classList.add("active");
   hiraBtn.classList.remove("active");
-  newKanaQuestion();
+  newQuestion();
 };
 k2rBtn.onclick=()=>{
   mode="k2r";
   k2rBtn.classList.add("active");
   r2kBtn.classList.remove("active");
   l2kBtn.classList.remove("active");
-  newKanaQuestion();
+  newQuestion();
 };
 r2kBtn.onclick=()=>{
   mode="r2k";
   r2kBtn.classList.add("active");
   k2rBtn.classList.remove("active");
   l2kBtn.classList.remove("active");
-  newKanaQuestion();
+  newQuestion();
 };
 l2kBtn.onclick=()=>{
   mode="l2k";
   l2kBtn.classList.add("active");
   k2rBtn.classList.remove("active");
   r2kBtn.classList.remove("active");
-  newKanaQuestion();
+  newQuestion();
 };
 
-document.getElementById("nextBtn").onclick=()=>newKanaQuestion();
+document.getElementById("nextBtn").onclick=()=>newQuestion();
 document.getElementById("resetBtn").onclick=()=>{
   score={c:0,t:0};
   updateScore();
-  newKanaQuestion();
+  newQuestion();
 };
 document.getElementById("playBtn").onclick=()=>{
   if(!current) return;
@@ -569,18 +615,16 @@ srText.addEventListener("input", () => {
 });
 
 /* ============================================================
-   新增：中⇄日 小測驗遊戲（可重用）
-   - bank: [{ zh, ja, icon? }]
+   小測驗（可重用）— 原本功能保留
 ============================================================ */
 function createBilingualQuiz(opts){
   const {
     bank,
-    ids,                // {prompt, sub, choices, score, hint}
-    btns,               // {dirA, dirB, ttsOff, ttsOn, play, next, reset}
-    defaultDirection,   // "C2J" | "J2C"
-    titleForHint,       // e.g. "對應"
-    iconMode,           // "emoji" | undefined
-    iconElId            // e.g. "wordIcon"
+    ids,
+    btns,
+    defaultDirection,
+    titleForHint,
+    iconElId
   } = opts;
 
   let direction = defaultDirection || "C2J";
@@ -596,12 +640,10 @@ function createBilingualQuiz(opts){
   function setHint(text){ document.getElementById(ids.hint).textContent = text || ""; }
 
   function setIcon(item){
-    if(!iconMode || !iconElId) return;
+    if(!iconElId) return;
     const el = document.getElementById(iconElId);
     if(!el) return;
-    if(iconMode === "emoji"){
-      el.textContent = item.icon || "🧩";
-    }
+    el.textContent = item?.icon ? String(item.icon) : "🧩";
   }
 
   function getPromptText(item){
@@ -655,11 +697,23 @@ function createBilingualQuiz(opts){
 
   function maybePlayForQuestion(){
     if(!ttsEnabled || !q) return;
-    // 題目若是日文 -> 播題目日文；題目若是中文 -> 播正解日文（都播 q.ja）
     speakJP(q.ja);
   }
 
   function newQ(){
+    if(!bank.length){
+      // 題庫空：顯示提示，不出題
+      setHint("題庫尚未載入（請確認 guide_data.json 是否存在於同一路徑）");
+      document.getElementById(ids.prompt).textContent = "（尚未載入）";
+      document.getElementById(ids.sub).textContent = "請先載入題庫";
+      document.getElementById(ids.choices).innerHTML = "";
+      setIcon({ icon: "🧩" });
+      q = null;
+      correct = null;
+      revealed = true;
+      return;
+    }
+
     revealed = false;
     setHint("");
 
@@ -678,6 +732,7 @@ function createBilingualQuiz(opts){
     setTimeout(()=> maybePlayForQuestion(), 100);
   }
 
+  // buttons
   document.getElementById(btns.dirA).onclick = () => {
     direction = "C2J";
     document.getElementById(btns.dirA).classList.add("active");
@@ -704,7 +759,10 @@ function createBilingualQuiz(opts){
   };
 
   document.getElementById(btns.play).onclick = () => {
-    if(!q) return;
+    if(!q){
+      alert("題庫尚未載入，暫時無法播放。");
+      return;
+    }
     speakJP(q.ja);
   };
   document.getElementById(btns.next).onclick = () => newQ();
@@ -714,41 +772,57 @@ function createBilingualQuiz(opts){
     newQ();
   };
 
-  if(defaultDirection === "J2C"){
-    direction = "J2C";
-    document.getElementById(btns.dirB).classList.add("active");
-    document.getElementById(btns.dirA).classList.remove("active");
-  }
-
   setScore();
   newQ();
 
   return {
-    setBank: (newBank) => {
+    setBank: (arr) => {
       bank.length = 0;
-      newBank.forEach(x => bank.push(x));
+      arr.forEach(x=>bank.push(x));
       score = { c:0, t:0 };
       setScore();
       newQ();
-    }
+    },
+    getBank: () => bank
   };
 }
 
 /* ============================================================
-   資料庫：先備援（若 JSON 載入失敗，頁面仍能用）
+   題庫：
+   1) greetings 可保留內建做 fallback（不影響你原本功能）
+   2) words 不在 index.html 內建（依你的要求，必須從 JSON 載入）
 ============================================================ */
 let GREETING_BANK = [
   { zh: "你好", ja: "こんにちは" },
-  { zh: "早安", ja: "おはようございます" }
+  { zh: "早安", ja: "おはようございます" },
+  { zh: "晚上好", ja: "こんばんは" },
+  { zh: "晚安", ja: "おやすみなさい" },
+  { zh: "再見", ja: "さようなら" },
+  { zh: "短暫告別", ja: "じゃあね" },
+  { zh: "謝謝", ja: "ありがとうございます" },
+  { zh: "不客氣", ja: "どういたしまして" },
+  { zh: "對不起", ja: "すみません" },
+  { zh: "請多指教", ja: "よろしくお願いします" },
+  { zh: "麻煩您", ja: "お願いします" },
+  { zh: "好久不見", ja: "お久しぶりです" },
+  { zh: "你好嗎", ja: "お元気ですか" },
+  { zh: "恭喜您", ja: "おめでとうございます" },
+  { zh: "請保重", ja: "お大事に" },
+  { zh: "辛苦了", ja: "お疲れ様です" },
+  { zh: "我開動了", ja: "いただきます" },
+  { zh: "我吃飽了", ja: "ごちそうさまでした" },
+  { zh: "我出門了", ja: "行ってきます" },
+  { zh: "慢走", ja: "行ってらっしゃい" },
+  { zh: "我回來了", ja: "ただいま" },
+  { zh: "初次見面", ja: "はじめまして" },
+  { zh: "請等一下", ja: "ちょっと待ってください" }
 ];
 
-let WORD_BANK = [
-  { cat:"food", zh: "蘋果", ja: "りんご", icon:"🍎" },
-  { cat:"animals", zh: "貓", ja: "ねこ", icon:"🐱" }
-];
+// ✅ 依要求：index.html 不保留單字庫
+let WORD_BANK = [];
 
 /* ============================================================
-   啟動：問候語 / 單字 小測驗（先用備援資料）
+   啟動：問候語 / 單字 小測驗
 ============================================================ */
 const greetingQuiz = createBilingualQuiz({
   bank: GREETING_BANK,
@@ -764,46 +838,191 @@ const wordQuiz = createBilingualQuiz({
   btns: { dirA:"wordC2JBtn", dirB:"wordJ2CBtn", ttsOff:"wordTTSOffBtn", ttsOn:"wordTTSOnBtn", play:"wordPlayBtn", next:"wordNextBtn", reset:"wordResetBtn" },
   defaultDirection: "C2J",
   titleForHint: "對應",
-  iconMode: "emoji",
   iconElId: "wordIcon"
 });
 
 /* ============================================================
-   載入 JSON（guide_data.json）
+   JSON 載入
 ============================================================ */
-async function loadBank(){
+const dataStatusEl = document.getElementById("dataStatus");
+
+async function loadGuideData(){
   try{
-    const res = await fetch("./guide_data.json", { cache: "no-store" });
+    const res = await fetch("./guide_data.json", { cache:"no-store" });
     if(!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
 
-    const g = data?.banks?.greetings || [];
-    const w = data?.banks?.words || [];
+    const g = (data?.banks?.greetings || [])
+      .filter(x => x && x.zh && x.ja)
+      .map(x => ({ zh:String(x.zh), ja:String(x.ja) }));
 
-    // 基本資料清理：確保有 zh/ja，避免空值破壞遊戲
-    const g2 = g.filter(x => x && x.zh && x.ja).map(x => ({ zh:String(x.zh), ja:String(x.ja) }));
-    const w2 = w.filter(x => x && x.zh && x.ja).map(x => ({
-      cat: x.cat ? String(x.cat) : "misc",
-      zh: String(x.zh),
-      ja: String(x.ja),
-      icon: x.icon ? String(x.icon) : "🧩"
-    }));
+    const w = (data?.banks?.words || [])
+      .filter(x => x && x.zh && x.ja)
+      .map(x => ({
+        zh: String(x.zh),
+        ja: String(x.ja),
+        icon: x.icon ? String(x.icon) : "🧩"
+      }));
 
-    if(g2.length) greetingQuiz.setBank(g2);
-    if(w2.length) wordQuiz.setBank(w2);
+    if(g.length){
+      GREETING_BANK = g;
+      greetingQuiz.setBank(g);
+    }
 
-  }catch(e){
-    console.warn("Failed to load guide_data.json, using fallback banks.", e);
+    // ✅ 單字必須來自 JSON
+    WORD_BANK = w;
+    wordQuiz.setBank(w);
+
+    dataStatusEl.textContent = `題庫狀態：JSON 已載入 ✅（問候語 ${GREETING_BANK.length} 筆 / 單字 ${WORD_BANK.length} 筆）`;
+    rebuildQueue();
+    renderRdUI();
+  } catch(e){
+    console.warn("guide_data.json 載入失敗", e);
+    dataStatusEl.textContent = "題庫狀態：JSON 載入失敗 ❌（請確認 guide_data.json 是否與 index.html 同一路徑）";
+    // 單字題庫空，wordQuiz 會顯示提示但不壞掉
+    rebuildQueue();
+    renderRdUI();
   }
 }
+
+/* ============================================================
+   素材朗讀播放器（只讀 greetings + words 的 ja）
+============================================================ */
+let rdMode = "both"; // both | greet | word
+let rdQueue = [];    // [{type, zh, ja, icon?}]
+let rdIndex = 0;
+let rdRunning = false;
+
+const rdStatusEl = document.getElementById("rdStatus");
+const rdProgEl   = document.getElementById("rdProg");
+const rdNowEl    = document.getElementById("rdNow");
+const rdNowMeta  = document.getElementById("rdNowMeta");
+
+const rdBothBtn  = document.getElementById("rdBothBtn");
+const rdGreetBtn = document.getElementById("rdGreetBtn");
+const rdWordBtn  = document.getElementById("rdWordBtn");
+
+const rdStartBtn = document.getElementById("rdStartBtn");
+const rdPauseBtn = document.getElementById("rdPauseBtn");
+const rdStopBtn  = document.getElementById("rdStopBtn");
+const rdNextBtn  = document.getElementById("rdNextBtn");
+
+function setRdMode(mode){
+  rdMode = mode;
+  rdBothBtn.classList.toggle("active", mode==="both");
+  rdGreetBtn.classList.toggle("active", mode==="greet");
+  rdWordBtn.classList.toggle("active", mode==="word");
+  rebuildQueue();
+  renderRdUI();
+}
+
+function rebuildQueue(){
+  const g = GREETING_BANK.map(x => ({ type:"greeting", zh:x.zh, ja:x.ja }));
+  const w = WORD_BANK.map(x => ({ type:"word", zh:x.zh, ja:x.ja, icon:x.icon || "" }));
+
+  if(rdMode === "greet") rdQueue = g;
+  else if(rdMode === "word") rdQueue = w;
+  else rdQueue = [...g, ...w];
+
+  rdIndex = 0;
+}
+
+function renderRdUI(){
+  rdStatusEl.textContent = rdRunning ? "播放中" : "待機";
+  rdProgEl.textContent = `${rdQueue.length ? Math.min(rdIndex+1, rdQueue.length) : 0} / ${rdQueue.length}`;
+
+  const cur = rdQueue[rdIndex];
+  rdNowEl.textContent = cur ? cur.ja : "（空）";
+  rdNowMeta.textContent = cur ? `${cur.type==="greeting" ? "問候語" : "單字"}：${cur.zh}` : "（空）";
+
+  rdStartBtn.disabled = rdQueue.length === 0;
+  rdPauseBtn.disabled = !rdRunning;
+  rdStopBtn.disabled  = !rdRunning;
+  rdNextBtn.disabled  = !rdRunning;
+}
+
+function speakOneAndChain(){
+  if(!rdRunning) return;
+  if(!rdQueue.length || rdIndex >= rdQueue.length){
+    rdRunning = false;
+    renderRdUI();
+    return;
+  }
+
+  const cur = rdQueue[rdIndex];
+  renderRdUI();
+
+  if(!("speechSynthesis" in window)){
+    alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
+    rdRunning = false;
+    renderRdUI();
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(cur.ja);
+  u.lang = "ja-JP";
+  u.rate = 0.9;
+  u.pitch = 1.0;
+
+  u.onend = () => {
+    if(!rdRunning) return;
+    rdIndex++;
+    speakOneAndChain();
+  };
+  u.onerror = () => {
+    if(!rdRunning) return;
+    rdIndex++;
+    speakOneAndChain();
+  };
+
+  window.speechSynthesis.speak(u);
+}
+
+rdBothBtn.onclick = ()=> setRdMode("both");
+rdGreetBtn.onclick = ()=> setRdMode("greet");
+rdWordBtn.onclick = ()=> setRdMode("word");
+
+rdStartBtn.onclick = ()=>{
+  if(!rdQueue.length){
+    alert("目前沒有可朗讀的素材（請先確認 JSON 已載入）。");
+    return;
+  }
+  rdRunning = true;
+  renderRdUI();
+  speakOneAndChain();
+};
+
+rdPauseBtn.onclick = ()=>{
+  rdRunning = false;
+  window.speechSynthesis.cancel();
+  renderRdUI();
+};
+
+rdStopBtn.onclick = ()=>{
+  rdRunning = false;
+  window.speechSynthesis.cancel();
+  rdIndex = 0;
+  renderRdUI();
+};
+
+rdNextBtn.onclick = ()=>{
+  if(!rdRunning) return;
+  window.speechSynthesis.cancel();
+  rdIndex = Math.min(rdIndex + 1, rdQueue.length);
+  speakOneAndChain();
+};
 
 /* ============================================================
    初始化
 ============================================================ */
 updateScore();
-newKanaQuestion();
+newQuestion();
 setSRStatus(SpeechRecognition ? "未啟動" : "不支援");
-loadBank();
+
+rebuildQueue();
+renderRdUI();
+loadGuideData();
 </script>
 </body>
 </html>
