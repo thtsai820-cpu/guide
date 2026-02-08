@@ -76,26 +76,6 @@ textarea:focus { border-color: #111827; }
 .quizSubSm { text-align:center; color:#6b7280; font-size: 13px; margin-bottom: 8px; }
 
 .kpi { font-size: 18px; font-weight: 900; }
-
-/* 新增：朗讀區 */
-.readingNow {
-  font-size: 22px;
-  font-weight: 900;
-  text-align: center;
-  margin: 10px 0 4px;
-  word-break: break-word;
-}
-.readingMeta {
-  text-align: center;
-  color: #6b7280;
-  font-size: 12px;
-}
-.readingWarn {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #6b7280;
-  line-height: 1.5;
-}
 </style>
 </head>
 
@@ -186,7 +166,7 @@ textarea:focus { border-color: #111827; }
 
   </div>
 
-  <!-- 新增：問候語小測驗 -->
+  <!-- 問候語小測驗 -->
   <div class="card" style="margin-top:12px;">
     <div class="sectionTitle">🧩 問候語小測驗（中⇄日） <span class="badge">可擴充</span></div>
     <div class="sectionDesc">
@@ -233,11 +213,11 @@ textarea:focus { border-color: #111827; }
     </div>
   </div>
 
-  <!-- 新增：單字小測驗 -->
+  <!-- 單字小測驗 -->
   <div class="card" style="margin-top:12px;">
-    <div class="sectionTitle">🧩 單字小測驗（中⇄日） <span class="badge">可擴充</span></div>
+    <div class="sectionTitle">🧩 單字小測驗（中⇄日） <span class="badge">題目旁有 emoji 示意圖</span></div>
     <div class="sectionDesc">
-      遊戲玩法同上。你未來要加更多單字，只要把資料加入陣列即可。
+      遊戲玩法同上。你未來要加更多單字，只要把資料加入 JSON 即可。若該筆有 icon，會顯示在題目旁。
     </div>
     <hr class="hr" />
 
@@ -265,7 +245,10 @@ textarea:focus { border-color: #111827; }
     </div>
 
     <div style="margin-top:10px;">
-      <div id="wordPrompt" class="quizPromptSm">蘋果</div>
+      <div id="wordPromptWrap" class="row" style="justify-content:center; align-items:center; gap:10px;">
+        <div id="wordIcon" style="font-size:44px; line-height:1;">🧩</div>
+        <div id="wordPrompt" class="quizPromptSm" style="margin:0;">蘋果</div>
+      </div>
       <div id="wordSub" class="quizSubSm">請選出正確對應</div>
       <div id="wordChoices" class="choices"></div>
 
@@ -276,59 +259,6 @@ textarea:focus { border-color: #111827; }
       </div>
 
       <div id="wordHint" class="hint"></div>
-    </div>
-  </div>
-
-  <!-- 新增：素材朗讀（只取 greetings + words） -->
-  <div class="card" style="margin-top:12px;">
-    <div class="sectionTitle">🔊 素材朗讀（問候語＋單字） <span class="badge">從 JSON 讀</span></div>
-    <div class="sectionDesc">
-      只會朗讀資料庫 <span class="kbd">banks.greetings</span> 與 <span class="kbd">banks.words</span> 的 <span class="kbd">ja</span>。
-      並且會自動跳過「純漢字」內容（必須含假名才會唸）。
-    </div>
-    <hr class="hr" />
-
-    <div class="row" style="align-items:center;">
-      <div class="group" style="min-width:220px;">
-        <div class="label">資料檔</div>
-        <div class="small"><span class="kbd" id="dbUrlLabel">./guide_data.json</span></div>
-      </div>
-
-      <div class="group">
-        <div class="label">模式</div>
-        <div class="seg">
-          <button id="readLoopBtn" class="active">循環播放</button>
-          <button id="readOnceBtn">播完停止</button>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="label">自動下一句</div>
-        <div class="seg">
-          <button id="readAutoOnBtn" class="active">開</button>
-          <button id="readAutoOffBtn">關</button>
-        </div>
-      </div>
-
-      <div class="group">
-        <div class="label">進度</div>
-        <div id="readProgress" class="kpi">0 / 0</div>
-      </div>
-    </div>
-
-    <div class="readingNow" id="readNow">（尚未載入）</div>
-    <div class="readingMeta" id="readMeta">—</div>
-
-    <div class="actions">
-      <button id="readPrevBtn" class="ghost">⏮ 上一句</button>
-      <button id="readPlayBtn" class="primary">▶︎ 播放</button>
-      <button id="readNextBtn" class="ghost">⏭ 下一句</button>
-      <button id="readStopBtn" class="danger">⏹ 停止</button>
-      <button id="readReloadBtn" class="playBtn">⟲ 重新載入 JSON</button>
-    </div>
-
-    <div class="readingWarn">
-      若你更新了 json 內容但網頁沒變，請按「重新載入 JSON」或強制重新整理（Ctrl+F5）。
     </div>
   </div>
 
@@ -397,7 +327,7 @@ function updateScore(){
   document.getElementById("scoreBox").textContent = `${score.c} / ${score.t}`;
 }
 
-function renderChoices(arr){
+function renderKanaChoices(arr){
   const box=document.getElementById("choices");
   box.innerHTML="";
 
@@ -427,7 +357,7 @@ function renderChoices(arr){
   });
 }
 
-function newQuestion(){
+function newKanaQuestion(){
   revealed = false;
   document.getElementById("hint").textContent = "";
 
@@ -447,7 +377,7 @@ function newQuestion(){
       const rr = KANA[rand(KANA.length)][2];
       uniqPush(opts, rr);
     }
-    renderChoices(shuffle(opts));
+    renderKanaChoices(shuffle(opts));
 
   } else if(mode==="r2k"){
     promptEl.textContent = r;
@@ -461,7 +391,7 @@ function newQuestion(){
         : KANA[rand(KANA.length)][1];
       uniqPush(opts, kk2);
     }
-    renderChoices(shuffle(opts));
+    renderKanaChoices(shuffle(opts));
 
   } else { // l2k
     promptEl.textContent = "🔊";
@@ -475,7 +405,7 @@ function newQuestion(){
         : KANA[rand(KANA.length)][1];
       uniqPush(opts, kk2);
     }
-    renderChoices(shuffle(opts));
+    renderKanaChoices(shuffle(opts));
     setTimeout(()=> speakJP(kanaLabel(current)), 120);
   }
 }
@@ -491,41 +421,41 @@ hiraBtn.onclick=()=>{
   script="hira";
   hiraBtn.classList.add("active");
   kataBtn.classList.remove("active");
-  newQuestion();
+  newKanaQuestion();
 };
 kataBtn.onclick=()=>{
   script="kata";
   kataBtn.classList.add("active");
   hiraBtn.classList.remove("active");
-  newQuestion();
+  newKanaQuestion();
 };
 k2rBtn.onclick=()=>{
   mode="k2r";
   k2rBtn.classList.add("active");
   r2kBtn.classList.remove("active");
   l2kBtn.classList.remove("active");
-  newQuestion();
+  newKanaQuestion();
 };
 r2kBtn.onclick=()=>{
   mode="r2k";
   r2kBtn.classList.add("active");
   k2rBtn.classList.remove("active");
   l2kBtn.classList.remove("active");
-  newQuestion();
+  newKanaQuestion();
 };
 l2kBtn.onclick=()=>{
   mode="l2k";
   l2kBtn.classList.add("active");
   k2rBtn.classList.remove("active");
   r2kBtn.classList.remove("active");
-  newQuestion();
+  newKanaQuestion();
 };
 
-document.getElementById("nextBtn").onclick=()=>newQuestion();
+document.getElementById("nextBtn").onclick=()=>newKanaQuestion();
 document.getElementById("resetBtn").onclick=()=>{
   score={c:0,t:0};
   updateScore();
-  newQuestion();
+  newKanaQuestion();
 };
 document.getElementById("playBtn").onclick=()=>{
   if(!current) return;
@@ -640,6 +570,7 @@ srText.addEventListener("input", () => {
 
 /* ============================================================
    新增：中⇄日 小測驗遊戲（可重用）
+   - bank: [{ zh, ja, icon? }]
 ============================================================ */
 function createBilingualQuiz(opts){
   const {
@@ -647,7 +578,9 @@ function createBilingualQuiz(opts){
     ids,                // {prompt, sub, choices, score, hint}
     btns,               // {dirA, dirB, ttsOff, ttsOn, play, next, reset}
     defaultDirection,   // "C2J" | "J2C"
-    titleForHint
+    titleForHint,       // e.g. "對應"
+    iconMode,           // "emoji" | undefined
+    iconElId            // e.g. "wordIcon"
   } = opts;
 
   let direction = defaultDirection || "C2J";
@@ -662,8 +595,21 @@ function createBilingualQuiz(opts){
   }
   function setHint(text){ document.getElementById(ids.hint).textContent = text || ""; }
 
-  function getPromptText(item){ return direction === "C2J" ? item.zh : item.ja; }
-  function getCorrectText(item){ return direction === "C2J" ? item.ja : item.zh; }
+  function setIcon(item){
+    if(!iconMode || !iconElId) return;
+    const el = document.getElementById(iconElId);
+    if(!el) return;
+    if(iconMode === "emoji"){
+      el.textContent = item.icon || "🧩";
+    }
+  }
+
+  function getPromptText(item){
+    return direction === "C2J" ? item.zh : item.ja;
+  }
+  function getCorrectText(item){
+    return direction === "C2J" ? item.ja : item.zh;
+  }
 
   function pickWrongChoices(item, n){
     const pool = bank.filter(x => x !== item);
@@ -709,6 +655,7 @@ function createBilingualQuiz(opts){
 
   function maybePlayForQuestion(){
     if(!ttsEnabled || !q) return;
+    // 題目若是日文 -> 播題目日文；題目若是中文 -> 播正解日文（都播 q.ja）
     speakJP(q.ja);
   }
 
@@ -716,18 +663,14 @@ function createBilingualQuiz(opts){
     revealed = false;
     setHint("");
 
-    if(!bank || bank.length < 4){
-      document.getElementById(ids.prompt).textContent = "題庫不足（至少 4 筆）";
-      document.getElementById(ids.sub).textContent = "請先在 JSON 裡補資料";
-      document.getElementById(ids.choices).innerHTML = "";
-      return;
-    }
-
     q = bank[rand(bank.length)];
+    setIcon(q);
+
     document.getElementById(ids.prompt).textContent = getPromptText(q);
     document.getElementById(ids.sub).textContent = "請選出正確對應";
 
     correct = getCorrectText(q);
+
     const wrong = pickWrongChoices(q, 3);
     const choices = shuffle([correct, ...wrong]);
     renderChoices(choices);
@@ -776,48 +719,37 @@ function createBilingualQuiz(opts){
     document.getElementById(btns.dirB).classList.add("active");
     document.getElementById(btns.dirA).classList.remove("active");
   }
+
   setScore();
   newQ();
 
   return {
-    setBank: (newBank) => { opts.bank.splice(0, opts.bank.length, ...(newBank||[])); newQ(); },
-    getState: () => ({ direction, ttsEnabled, score })
+    setBank: (newBank) => {
+      bank.length = 0;
+      newBank.forEach(x => bank.push(x));
+      score = { c:0, t:0 };
+      setScore();
+      newQ();
+    }
   };
 }
 
 /* ============================================================
-   JSON 題庫載入（你的結構：banks.greetings / banks.words）
+   資料庫：先備援（若 JSON 載入失敗，頁面仍能用）
 ============================================================ */
-const DATA_URL = "./guide_data.json"; // 你可改檔名
-document.getElementById("dbUrlLabel").textContent = DATA_URL;
+let GREETING_BANK = [
+  { zh: "你好", ja: "こんにちは" },
+  { zh: "早安", ja: "おはようございます" }
+];
 
-async function loadGuideDB(){
-  const res = await fetch(DATA_URL, { cache: "no-store" });
-  if(!res.ok) throw new Error(`讀取失敗：${res.status} ${res.statusText}`);
-  return await res.json();
-}
-
-function safeBankArray(db, key){
-  return (db && db.banks && Array.isArray(db.banks[key])) ? db.banks[key] : [];
-}
+let WORD_BANK = [
+  { cat:"food", zh: "蘋果", ja: "りんご", icon:"🍎" },
+  { cat:"animals", zh: "貓", ja: "ねこ", icon:"🐱" }
+];
 
 /* ============================================================
-   啟動：問候語 / 單字 小測驗（先用預設，載入後再覆蓋）
+   啟動：問候語 / 單字 小測驗（先用備援資料）
 ============================================================ */
-const GREETING_BANK = [
-  { zh: "你好", ja: "こんにちは" },
-  { zh: "早安", ja: "おはようございます" },
-  { zh: "晚上好", ja: "こんばんは" },
-  { zh: "晚安", ja: "おやすみなさい" }
-];
-
-const WORD_BANK = [
-  { zh: "蘋果", ja: "りんご" },
-  { zh: "橘子", ja: "みかん" },
-  { zh: "鯊魚", ja: "サメ" },
-  { zh: "筆記本", ja: "ノート" }
-];
-
 const greetingQuiz = createBilingualQuiz({
   bank: GREETING_BANK,
   ids: { prompt:"greetPrompt", sub:"greetSub", choices:"greetChoices", score:"greetScore", hint:"greetHint" },
@@ -831,197 +763,37 @@ const wordQuiz = createBilingualQuiz({
   ids: { prompt:"wordPrompt", sub:"wordSub", choices:"wordChoices", score:"wordScore", hint:"wordHint" },
   btns: { dirA:"wordC2JBtn", dirB:"wordJ2CBtn", ttsOff:"wordTTSOffBtn", ttsOn:"wordTTSOnBtn", play:"wordPlayBtn", next:"wordNextBtn", reset:"wordResetBtn" },
   defaultDirection: "C2J",
-  titleForHint: "對應"
+  titleForHint: "對應",
+  iconMode: "emoji",
+  iconElId: "wordIcon"
 });
 
 /* ============================================================
-   新增：素材朗讀（只取 greetings + words 的 ja）
-   規則：必須含假名(平/片)才朗讀，避免純漢字中文被念出來
+   載入 JSON（guide_data.json）
 ============================================================ */
-const KANA_RE = /[\u3040-\u309F\u30A0-\u30FF]/; // hira+kata
-function hasKana(s){
-  return KANA_RE.test(String(s || ""));
-}
-
-function buildReadingList(db){
-  const list = [];
-  const g = safeBankArray(db, "greetings");
-  const w = safeBankArray(db, "words");
-
-  function pushJa(item){
-    const ja = (item && item.ja ? String(item.ja).trim() : "");
-    if(!ja) return;
-    if(!hasKana(ja)) return; // 只要純漢字就跳過
-    if(!list.includes(ja)) list.push(ja);
-  }
-  g.forEach(pushJa);
-  w.forEach(pushJa);
-
-  return list;
-}
-
-let READ_LIST = [];
-let readIdx = 0;
-let readPlaying = false;
-let readAutoNext = true;
-let readLoop = true;
-
-const readNowEl = document.getElementById("readNow");
-const readMetaEl = document.getElementById("readMeta");
-const readProgressEl = document.getElementById("readProgress");
-
-function renderRead(){
-  if(READ_LIST.length === 0){
-    readNowEl.textContent = "（無可朗讀素材：可能都被判定為純漢字或題庫為空）";
-    readMetaEl.textContent = "—";
-    readProgressEl.textContent = `0 / 0`;
-    return;
-  }
-  readNowEl.textContent = READ_LIST[readIdx];
-  readMetaEl.textContent = `來源：greetings + words • 素材含假名才會朗讀`;
-  readProgressEl.textContent = `${readIdx+1} / ${READ_LIST.length}`;
-}
-
-function stopRead(){
-  readPlaying = false;
-  document.getElementById("readPlayBtn").textContent = "▶︎ 播放";
-  if("speechSynthesis" in window) window.speechSynthesis.cancel();
-}
-
-function speakJPWithEnd(text, onend){
-  if(!("speechSynthesis" in window)) {
-    alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
-    return;
-  }
-  window.speechSynthesis.cancel();
-
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = "ja-JP";
-  u.rate = 0.9;
-  u.pitch = 1.0;
-
-  const voices = window.speechSynthesis.getVoices?.() || [];
-  const jp = voices.find(v => (v.lang || "").toLowerCase().startsWith("ja"));
-  if(jp) u.voice = jp;
-
-  u.onend = () => { if(typeof onend === "function") onend(); };
-  window.speechSynthesis.speak(u);
-}
-
-function playRead(){
-  if(READ_LIST.length === 0) return;
-  readPlaying = true;
-  document.getElementById("readPlayBtn").textContent = "⏸ 暫停";
-  const text = READ_LIST[readIdx];
-
-  speakJPWithEnd(text, () => {
-    if(!readPlaying || !readAutoNext) return;
-
-    // 下一句
-    if(readIdx < READ_LIST.length - 1){
-      readIdx++;
-      renderRead();
-      setTimeout(()=> playRead(), 120);
-    } else {
-      // 到尾端
-      if(readLoop){
-        readIdx = 0;
-        renderRead();
-        setTimeout(()=> playRead(), 120);
-      } else {
-        stopRead();
-      }
-    }
-  });
-}
-
-/* 朗讀 UI events */
-document.getElementById("readPrevBtn").onclick = () => {
-  if(READ_LIST.length === 0) return;
-  readIdx = (readIdx - 1 + READ_LIST.length) % READ_LIST.length;
-  renderRead();
-  if(readPlaying) playRead();
-};
-
-document.getElementById("readNextBtn").onclick = () => {
-  if(READ_LIST.length === 0) return;
-  readIdx = (readIdx + 1) % READ_LIST.length;
-  renderRead();
-  if(readPlaying) playRead();
-};
-
-document.getElementById("readPlayBtn").onclick = () => {
-  if(READ_LIST.length === 0) return;
-  if(readPlaying){
-    stopRead();
-  } else {
-    playRead();
-  }
-};
-
-document.getElementById("readStopBtn").onclick = () => stopRead();
-
-document.getElementById("readReloadBtn").onclick = async () => {
-  stopRead();
-  await hydrateFromJSON();
-};
-
-document.getElementById("readLoopBtn").onclick = () => {
-  readLoop = true;
-  document.getElementById("readLoopBtn").classList.add("active");
-  document.getElementById("readOnceBtn").classList.remove("active");
-};
-
-document.getElementById("readOnceBtn").onclick = () => {
-  readLoop = false;
-  document.getElementById("readOnceBtn").classList.add("active");
-  document.getElementById("readLoopBtn").classList.remove("active");
-};
-
-document.getElementById("readAutoOnBtn").onclick = () => {
-  readAutoNext = true;
-  document.getElementById("readAutoOnBtn").classList.add("active");
-  document.getElementById("readAutoOffBtn").classList.remove("active");
-};
-document.getElementById("readAutoOffBtn").onclick = () => {
-  readAutoNext = false;
-  document.getElementById("readAutoOffBtn").classList.add("active");
-  document.getElementById("readAutoOnBtn").classList.remove("active");
-};
-
-/* ============================================================
-   從 JSON 覆蓋題庫（問候語、單字）+ 建立朗讀清單
-============================================================ */
-async function hydrateFromJSON(){
+async function loadBank(){
   try{
-    const db = await loadGuideDB();
+    const res = await fetch("./guide_data.json", { cache: "no-store" });
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
 
-    const g = safeBankArray(db, "greetings");
-    const w = safeBankArray(db, "words");
+    const g = data?.banks?.greetings || [];
+    const w = data?.banks?.words || [];
 
-    // 覆蓋小測驗題庫
-    if(Array.isArray(g) && g.length >= 4){
-      GREETING_BANK.splice(0, GREETING_BANK.length, ...g);
-    }
-    if(Array.isArray(w) && w.length >= 4){
-      WORD_BANK.splice(0, WORD_BANK.length, ...w);
-    }
+    // 基本資料清理：確保有 zh/ja，避免空值破壞遊戲
+    const g2 = g.filter(x => x && x.zh && x.ja).map(x => ({ zh:String(x.zh), ja:String(x.ja) }));
+    const w2 = w.filter(x => x && x.zh && x.ja).map(x => ({
+      cat: x.cat ? String(x.cat) : "misc",
+      zh: String(x.zh),
+      ja: String(x.ja),
+      icon: x.icon ? String(x.icon) : "🧩"
+    }));
 
-    // 重新出題（用新的 bank）
-    // 直接重置分數的話可能不想；所以只下一題刷新即可
-    document.getElementById("greetNextBtn").click();
-    document.getElementById("wordNextBtn").click();
+    if(g2.length) greetingQuiz.setBank(g2);
+    if(w2.length) wordQuiz.setBank(w2);
 
-    // 建立朗讀清單
-    READ_LIST = buildReadingList(db);
-    readIdx = 0;
-    renderRead();
-
-  }catch(err){
-    console.error(err);
-    alert("JSON 載入失敗：\n" + err.message + "\n\n請確認 guide_data.json 的路徑與 JSON 格式。");
-    READ_LIST = [];
-    renderRead();
+  }catch(e){
+    console.warn("Failed to load guide_data.json, using fallback banks.", e);
   }
 }
 
@@ -1029,10 +801,9 @@ async function hydrateFromJSON(){
    初始化
 ============================================================ */
 updateScore();
-newQuestion();
+newKanaQuestion();
 setSRStatus(SpeechRecognition ? "未啟動" : "不支援");
-renderRead();
-hydrateFromJSON();
+loadBank();
 </script>
 </body>
 </html>
