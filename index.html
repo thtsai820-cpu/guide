@@ -33,7 +33,7 @@ body { margin: 0; }
 .correct { background: #ecfdf5; border-color: #16a34a; }
 .wrong { background: #fef2f2; border-color: #dc2626; }
 
-.actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+.actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items:center; }
 .primary, .ghost, .playBtn, .danger {
   padding: 10px 12px; border-radius: 12px; cursor: pointer; font-weight: 700;
   border: 1px solid #e5e7eb; background: white;
@@ -76,6 +76,9 @@ textarea:focus { border-color: #111827; }
 .quizSubSm { text-align:center; color:#6b7280; font-size: 13px; margin-bottom: 8px; }
 
 .kpi { font-size: 18px; font-weight: 900; }
+
+.rateWrap{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+input[type="range"]{ width: 180px; }
 </style>
 </head>
 
@@ -166,11 +169,12 @@ textarea:focus { border-color: #111827; }
 
   </div>
 
-  <!-- 素材朗讀（問候語＋單字） -->
+  <!-- 素材朗讀（手動：上一句 / 朗讀 / 下一句 + 語速） -->
   <div class="card" style="margin-top:12px;">
-    <div class="sectionTitle">🎧 素材朗讀（問候語＋單字） <span class="badge">只讀 JSON 題庫</span></div>
+    <div class="sectionTitle">🎧 素材朗讀（問候語＋單字） <span class="badge">手動模式</span></div>
     <div class="sectionDesc">
       朗讀來源：<span class="kbd">guide_data.json</span> 裡的 <span class="kbd">banks.greetings</span> 與 <span class="kbd">banks.words</span>（只朗讀 ja）。
+      已改為手動切換：上一句 / 朗讀 / 下一句；並提供語速控制。
     </div>
     <hr class="hr" />
 
@@ -185,25 +189,28 @@ textarea:focus { border-color: #111827; }
       </div>
 
       <div class="group">
-        <div class="label">播放狀態</div>
-        <div class="badge" id="rdStatus">待機</div>
+        <div class="label">進度</div>
+        <div class="kpi" id="rdProg">0 / 0</div>
       </div>
 
       <div class="group">
-        <div class="label">進度</div>
-        <div class="kpi" id="rdProg">0 / 0</div>
+        <div class="label">語速</div>
+        <div class="rateWrap">
+          <input id="rdRate" type="range" min="0.5" max="1.2" step="0.05" value="0.85" />
+          <span class="badge" id="rdRateVal">0.85x</span>
+        </div>
+        <div class="small">建議：0.70–0.90 比較適合通勤/工作時慢聽</div>
       </div>
     </div>
 
     <div class="actions">
-      <button id="rdStartBtn" class="primary">▶︎ 開始朗讀</button>
-      <button id="rdPauseBtn" class="ghost" disabled>⏸ 暫停</button>
-      <button id="rdStopBtn" class="danger" disabled>⏹ 停止</button>
-      <button id="rdNextBtn" class="playBtn" disabled>⏭ 下一句</button>
+      <button id="rdPrevBtn" class="ghost">⏮ 上一句</button>
+      <button id="rdSpeakBtn" class="primary">🔊 朗讀</button>
+      <button id="rdNextBtn2" class="ghost">下一句 ⏭</button>
     </div>
 
     <div class="note">
-      <div class="small">目前朗讀：</div>
+      <div class="small">目前句子：</div>
       <div id="rdNow" class="final">（空）</div>
       <div class="small" id="rdNowMeta">（空）</div>
     </div>
@@ -319,9 +326,9 @@ function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
 function uniqPush(arr, v){ if(!arr.includes(v)) arr.push(v); }
 
 /* ============================================================
-   TTS：唸日文
+   TTS：唸日文（支援語速）
 ============================================================ */
-function speakJP(text){
+function speakJP(text, rate=0.9){
   if(!("speechSynthesis" in window)) {
     alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
     return;
@@ -330,7 +337,7 @@ function speakJP(text){
 
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "ja-JP";
-  u.rate = 0.9;
+  u.rate = rate;
   u.pitch = 1.0;
 
   const voices = window.speechSynthesis.getVoices?.() || [];
@@ -452,7 +459,7 @@ function newQuestion(){
       uniqPush(opts, kk2);
     }
     renderChoices(shuffle(opts));
-    setTimeout(()=> speakJP(kanaLabel(current)), 120);
+    setTimeout(()=> speakJP(kanaLabel(current), 0.9), 120);
   }
 }
 
@@ -492,6 +499,8 @@ r2kBtn.onclick=()=>{
 l2kBtn.onclick=()=>{
   mode="l2k";
   l2kBtn.classList.add("active");
+  k2kBtn = null;
+  l2kBtn.classList.add("active");
   k2rBtn.classList.remove("active");
   r2kBtn.classList.remove("active");
   newQuestion();
@@ -505,7 +514,7 @@ document.getElementById("resetBtn").onclick=()=>{
 };
 document.getElementById("playBtn").onclick=()=>{
   if(!current) return;
-  speakJP(kanaLabel(current));
+  speakJP(kanaLabel(current), 0.9);
 };
 
 /* ============================================================
@@ -606,7 +615,7 @@ srSpeakBtn.onclick = () => {
     alert("目前沒有辨識結果可播放。");
     return;
   }
-  speakJP(t);
+  speakJP(t, 0.9);
 };
 
 srText.addEventListener("input", () => {
@@ -687,7 +696,7 @@ function createBilingualQuiz(opts){
         setHint(`正解：${correct}（${titleForHint}：${q.zh} ⇄ ${q.ja}）`);
 
         if(ttsEnabled){
-          speakJP(q.ja);
+          speakJP(q.ja, 0.9);
         }
       };
 
@@ -695,14 +704,8 @@ function createBilingualQuiz(opts){
     });
   }
 
-  function maybePlayForQuestion(){
-    if(!ttsEnabled || !q) return;
-    speakJP(q.ja);
-  }
-
   function newQ(){
     if(!bank.length){
-      // 題庫空：顯示提示，不出題
       setHint("題庫尚未載入（請確認 guide_data.json 是否存在於同一路徑）");
       document.getElementById(ids.prompt).textContent = "（尚未載入）";
       document.getElementById(ids.sub).textContent = "請先載入題庫";
@@ -728,11 +731,8 @@ function createBilingualQuiz(opts){
     const wrong = pickWrongChoices(q, 3);
     const choices = shuffle([correct, ...wrong]);
     renderChoices(choices);
-
-    setTimeout(()=> maybePlayForQuestion(), 100);
   }
 
-  // buttons
   document.getElementById(btns.dirA).onclick = () => {
     direction = "C2J";
     document.getElementById(btns.dirA).classList.add("active");
@@ -755,7 +755,7 @@ function createBilingualQuiz(opts){
     ttsEnabled = true;
     document.getElementById(btns.ttsOn).classList.add("active");
     document.getElementById(btns.ttsOff).classList.remove("active");
-    if(q) speakJP(q.ja);
+    if(q) speakJP(q.ja, 0.9);
   };
 
   document.getElementById(btns.play).onclick = () => {
@@ -763,7 +763,7 @@ function createBilingualQuiz(opts){
       alert("題庫尚未載入，暫時無法播放。");
       return;
     }
-    speakJP(q.ja);
+    speakJP(q.ja, 0.9);
   };
   document.getElementById(btns.next).onclick = () => newQ();
   document.getElementById(btns.reset).onclick = () => {
@@ -788,9 +788,7 @@ function createBilingualQuiz(opts){
 }
 
 /* ============================================================
-   題庫：
-   1) greetings 可保留內建做 fallback（不影響你原本功能）
-   2) words 不在 index.html 內建（依你的要求，必須從 JSON 載入）
+   題庫（問候語 fallback；單字不內建）
 ============================================================ */
 let GREETING_BANK = [
   { zh: "你好", ja: "こんにちは" },
@@ -818,12 +816,8 @@ let GREETING_BANK = [
   { zh: "請等一下", ja: "ちょっと待ってください" }
 ];
 
-// ✅ 依要求：index.html 不保留單字庫
 let WORD_BANK = [];
 
-/* ============================================================
-   啟動：問候語 / 單字 小測驗
-============================================================ */
 const greetingQuiz = createBilingualQuiz({
   bank: GREETING_BANK,
   ids: { prompt:"greetPrompt", sub:"greetSub", choices:"greetChoices", score:"greetScore", hint:"greetHint" },
@@ -869,31 +863,29 @@ async function loadGuideData(){
       greetingQuiz.setBank(g);
     }
 
-    // ✅ 單字必須來自 JSON
     WORD_BANK = w;
     wordQuiz.setBank(w);
 
     dataStatusEl.textContent = `題庫狀態：JSON 已載入 ✅（問候語 ${GREETING_BANK.length} 筆 / 單字 ${WORD_BANK.length} 筆）`;
+
     rebuildQueue();
     renderRdUI();
+
   } catch(e){
     console.warn("guide_data.json 載入失敗", e);
     dataStatusEl.textContent = "題庫狀態：JSON 載入失敗 ❌（請確認 guide_data.json 是否與 index.html 同一路徑）";
-    // 單字題庫空，wordQuiz 會顯示提示但不壞掉
     rebuildQueue();
     renderRdUI();
   }
 }
 
 /* ============================================================
-   素材朗讀播放器（只讀 greetings + words 的 ja）
+   素材朗讀播放器（手動上一句/朗讀/下一句 + 語速）
 ============================================================ */
 let rdMode = "both"; // both | greet | word
 let rdQueue = [];    // [{type, zh, ja, icon?}]
 let rdIndex = 0;
-let rdRunning = false;
 
-const rdStatusEl = document.getElementById("rdStatus");
 const rdProgEl   = document.getElementById("rdProg");
 const rdNowEl    = document.getElementById("rdNow");
 const rdNowMeta  = document.getElementById("rdNowMeta");
@@ -902,10 +894,14 @@ const rdBothBtn  = document.getElementById("rdBothBtn");
 const rdGreetBtn = document.getElementById("rdGreetBtn");
 const rdWordBtn  = document.getElementById("rdWordBtn");
 
-const rdStartBtn = document.getElementById("rdStartBtn");
-const rdPauseBtn = document.getElementById("rdPauseBtn");
-const rdStopBtn  = document.getElementById("rdStopBtn");
-const rdNextBtn  = document.getElementById("rdNextBtn");
+const rdPrevBtn  = document.getElementById("rdPrevBtn");
+const rdSpeakBtn = document.getElementById("rdSpeakBtn");
+const rdNextBtn2 = document.getElementById("rdNextBtn2");
+
+const rdRate     = document.getElementById("rdRate");
+const rdRateVal  = document.getElementById("rdRateVal");
+
+let rdSpeakRate = parseFloat(rdRate.value) || 0.85;
 
 function setRdMode(mode){
   rdMode = mode;
@@ -913,6 +909,7 @@ function setRdMode(mode){
   rdGreetBtn.classList.toggle("active", mode==="greet");
   rdWordBtn.classList.toggle("active", mode==="word");
   rebuildQueue();
+  rdIndex = 0;
   renderRdUI();
 }
 
@@ -923,95 +920,62 @@ function rebuildQueue(){
   if(rdMode === "greet") rdQueue = g;
   else if(rdMode === "word") rdQueue = w;
   else rdQueue = [...g, ...w];
-
-  rdIndex = 0;
 }
 
 function renderRdUI(){
-  rdStatusEl.textContent = rdRunning ? "播放中" : "待機";
-  rdProgEl.textContent = `${rdQueue.length ? Math.min(rdIndex+1, rdQueue.length) : 0} / ${rdQueue.length}`;
+  rdProgEl.textContent = `${rdQueue.length ? (rdIndex+1) : 0} / ${rdQueue.length}`;
 
   const cur = rdQueue[rdIndex];
   rdNowEl.textContent = cur ? cur.ja : "（空）";
   rdNowMeta.textContent = cur ? `${cur.type==="greeting" ? "問候語" : "單字"}：${cur.zh}` : "（空）";
 
-  rdStartBtn.disabled = rdQueue.length === 0;
-  rdPauseBtn.disabled = !rdRunning;
-  rdStopBtn.disabled  = !rdRunning;
-  rdNextBtn.disabled  = !rdRunning;
+  const disabled = rdQueue.length === 0;
+  rdPrevBtn.disabled = disabled;
+  rdSpeakBtn.disabled = disabled;
+  rdNextBtn2.disabled = disabled;
+
+  rdRate.disabled = disabled;
 }
 
-function speakOneAndChain(){
-  if(!rdRunning) return;
-  if(!rdQueue.length || rdIndex >= rdQueue.length){
-    rdRunning = false;
-    renderRdUI();
-    return;
-  }
-
+function rdSpeakCurrent(){
+  if(!rdQueue.length) return;
   const cur = rdQueue[rdIndex];
+  if(!cur) return;
+  speakJP(cur.ja, rdSpeakRate);
+}
+
+function rdPrev(){
+  if(!rdQueue.length) return;
+  rdIndex = (rdIndex - 1 + rdQueue.length) % rdQueue.length;
   renderRdUI();
+}
 
-  if(!("speechSynthesis" in window)){
-    alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
-    rdRunning = false;
-    renderRdUI();
-    return;
-  }
-
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(cur.ja);
-  u.lang = "ja-JP";
-  u.rate = 0.9;
-  u.pitch = 1.0;
-
-  u.onend = () => {
-    if(!rdRunning) return;
-    rdIndex++;
-    speakOneAndChain();
-  };
-  u.onerror = () => {
-    if(!rdRunning) return;
-    rdIndex++;
-    speakOneAndChain();
-  };
-
-  window.speechSynthesis.speak(u);
+function rdNext(){
+  if(!rdQueue.length) return;
+  rdIndex = (rdIndex + 1) % rdQueue.length;
+  renderRdUI();
 }
 
 rdBothBtn.onclick = ()=> setRdMode("both");
 rdGreetBtn.onclick = ()=> setRdMode("greet");
 rdWordBtn.onclick = ()=> setRdMode("word");
 
-rdStartBtn.onclick = ()=>{
-  if(!rdQueue.length){
-    alert("目前沒有可朗讀的素材（請先確認 JSON 已載入）。");
-    return;
-  }
-  rdRunning = true;
-  renderRdUI();
-  speakOneAndChain();
+rdPrevBtn.onclick = ()=>{
+  window.speechSynthesis?.cancel?.();
+  rdPrev();
+};
+rdNextBtn2.onclick = ()=>{
+  window.speechSynthesis?.cancel?.();
+  rdNext();
+};
+rdSpeakBtn.onclick = ()=>{
+  rdSpeakCurrent();
 };
 
-rdPauseBtn.onclick = ()=>{
-  rdRunning = false;
-  window.speechSynthesis.cancel();
-  renderRdUI();
-};
-
-rdStopBtn.onclick = ()=>{
-  rdRunning = false;
-  window.speechSynthesis.cancel();
-  rdIndex = 0;
-  renderRdUI();
-};
-
-rdNextBtn.onclick = ()=>{
-  if(!rdRunning) return;
-  window.speechSynthesis.cancel();
-  rdIndex = Math.min(rdIndex + 1, rdQueue.length);
-  speakOneAndChain();
-};
+rdRate.addEventListener("input", ()=>{
+  rdSpeakRate = parseFloat(rdRate.value) || 0.85;
+  rdRateVal.textContent = rdSpeakRate.toFixed(2) + "x";
+});
 
 /* ============================================================
    初始化
