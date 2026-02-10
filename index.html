@@ -79,6 +79,13 @@ textarea:focus { border-color: #111827; }
 
 .rateWrap{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
 input[type="range"]{ width: 180px; }
+
+.toggleRow{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.check{
+  display:flex; gap:8px; align-items:center;
+  padding: 6px 10px; border-radius: 999px; border:1px solid #e5e7eb; background:#fff;
+  font-size: 12px; color:#374151;
+}
 </style>
 </head>
 
@@ -169,12 +176,12 @@ input[type="range"]{ width: 180px; }
 
   </div>
 
-  <!-- 素材朗讀（手動：上一句 / 朗讀 / 下一句 + 語速） -->
+  <!-- 素材朗讀（手動 + 自動朗讀全部） -->
   <div class="card" style="margin-top:12px;">
-    <div class="sectionTitle">🎧 素材朗讀（問候語＋單字） <span class="badge">手動模式</span></div>
+    <div class="sectionTitle">🎧 素材朗讀（問候語＋單字） <span class="badge">手動＋自動</span></div>
     <div class="sectionDesc">
       朗讀來源：<span class="kbd">guide_data.json</span> 裡的 <span class="kbd">banks.greetings</span> 與 <span class="kbd">banks.words</span>（只朗讀 ja）。
-      已改為手動切換：上一句 / 朗讀 / 下一句；並提供語速控制。
+      你可手動「上一句 / 朗讀 / 下一句」，也可「自動朗讀全部」。
     </div>
     <hr class="hr" />
 
@@ -204,15 +211,30 @@ input[type="range"]{ width: 180px; }
     </div>
 
     <div class="actions">
+      <!-- 手動 -->
       <button id="rdPrevBtn" class="ghost">⏮ 上一句</button>
       <button id="rdSpeakBtn" class="primary">🔊 朗讀</button>
       <button id="rdNextBtn2" class="ghost">下一句 ⏭</button>
+
+      <!-- 自動 -->
+      <button id="rdAutoStartBtn" class="playBtn">▶ 自動朗讀全部</button>
+      <button id="rdAutoStopBtn" class="danger" disabled>■ 停止自動朗讀</button>
+
+      <label class="check">
+        <input id="rdLoop" type="checkbox" />
+        循環播放
+      </label>
+      <label class="check">
+        <input id="rdAutoAdvance" type="checkbox" checked />
+        自動換句
+      </label>
     </div>
 
     <div class="note">
       <div class="small">目前句子：</div>
       <div id="rdNow" class="final">（空）</div>
       <div class="small" id="rdNowMeta">（空）</div>
+      <div class="small" id="rdAutoState">自動朗讀：未啟動</div>
     </div>
 
     <div class="note small" id="dataStatus">題庫狀態：尚未載入 JSON</div>
@@ -326,12 +348,12 @@ function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
 function uniqPush(arr, v){ if(!arr.includes(v)) arr.push(v); }
 
 /* ============================================================
-   TTS：唸日文（支援語速）
+   TTS：唸日文（支援語速 + 允許 onend）
 ============================================================ */
-function speakJP(text, rate=0.9){
+function speakJP(text, rate=0.9, onend=null){
   if(!("speechSynthesis" in window)) {
     alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
-    return;
+    return null;
   }
   window.speechSynthesis.cancel();
 
@@ -344,7 +366,12 @@ function speakJP(text, rate=0.9){
   const jp = voices.find(v => (v.lang || "").toLowerCase().startsWith("ja"));
   if(jp) u.voice = jp;
 
+  if(typeof onend === "function"){
+    u.onend = onend;
+  }
+
   window.speechSynthesis.speak(u);
+  return u;
 }
 if("speechSynthesis" in window){
   window.speechSynthesis.onvoiceschanged = () => {};
@@ -498,8 +525,6 @@ r2kBtn.onclick=()=>{
 };
 l2kBtn.onclick=()=>{
   mode="l2k";
-  l2kBtn.classList.add("active");
-  k2kBtn = null;
   l2kBtn.classList.add("active");
   k2rBtn.classList.remove("active");
   r2kBtn.classList.remove("active");
@@ -880,7 +905,7 @@ async function loadGuideData(){
 }
 
 /* ============================================================
-   素材朗讀播放器（手動上一句/朗讀/下一句 + 語速）
+   素材朗讀播放器（手動 + 自動朗讀全部）
 ============================================================ */
 let rdMode = "both"; // both | greet | word
 let rdQueue = [];    // [{type, zh, ja, icon?}]
@@ -901,9 +926,21 @@ const rdNextBtn2 = document.getElementById("rdNextBtn2");
 const rdRate     = document.getElementById("rdRate");
 const rdRateVal  = document.getElementById("rdRateVal");
 
+// 自動朗讀 UI
+const rdAutoStartBtn = document.getElementById("rdAutoStartBtn");
+const rdAutoStopBtn  = document.getElementById("rdAutoStopBtn");
+const rdLoopEl        = document.getElementById("rdLoop");
+const rdAutoAdvanceEl = document.getElementById("rdAutoAdvance");
+const rdAutoStateEl   = document.getElementById("rdAutoState");
+
 let rdSpeakRate = parseFloat(rdRate.value) || 0.85;
 
+// 自動朗讀狀態
+let rdAutoRunning = false;
+let rdAutoToken = 0; // 用來避免 onend callback 競態
+
 function setRdMode(mode){
+  stopAutoRead(); // 切換模式時，先停止自動朗讀（避免跑錯 queue）
   rdMode = mode;
   rdBothBtn.classList.toggle("active", mode==="both");
   rdGreetBtn.classList.toggle("active", mode==="greet");
@@ -930,18 +967,25 @@ function renderRdUI(){
   rdNowMeta.textContent = cur ? `${cur.type==="greeting" ? "問候語" : "單字"}：${cur.zh}` : "（空）";
 
   const disabled = rdQueue.length === 0;
+
   rdPrevBtn.disabled = disabled;
   rdSpeakBtn.disabled = disabled;
   rdNextBtn2.disabled = disabled;
 
   rdRate.disabled = disabled;
+
+  // 自動朗讀按鈕
+  rdAutoStartBtn.disabled = disabled || rdAutoRunning;
+  rdAutoStopBtn.disabled  = disabled || !rdAutoRunning;
+
+  rdAutoStateEl.textContent = `自動朗讀：${rdAutoRunning ? "進行中…" : "未啟動"}`;
 }
 
-function rdSpeakCurrent(){
+function rdSpeakCurrent(onend=null){
   if(!rdQueue.length) return;
   const cur = rdQueue[rdIndex];
   if(!cur) return;
-  speakJP(cur.ja, rdSpeakRate);
+  speakJP(cur.ja, rdSpeakRate, onend);
 }
 
 function rdPrev(){
@@ -956,20 +1000,88 @@ function rdNext(){
   renderRdUI();
 }
 
+/* ---------- 自動朗讀全部：加回來 ---------- */
+function startAutoRead(){
+  if(!rdQueue.length) return;
+  if(rdAutoRunning) return;
+
+  rdAutoRunning = true;
+  rdAutoToken++;
+  const myToken = rdAutoToken;
+
+  // 規則：自動朗讀從「目前句」開始一路唸到最後
+  renderRdUI();
+
+  const step = () => {
+    if(!rdAutoRunning) return;
+    if(myToken !== rdAutoToken) return;
+
+    rdSpeakCurrent(() => {
+      if(!rdAutoRunning) return;
+      if(myToken !== rdAutoToken) return;
+
+      const autoAdvance = rdAutoAdvanceEl.checked;
+      if(autoAdvance){
+        const atLast = (rdIndex >= rdQueue.length - 1);
+        if(atLast){
+          if(rdLoopEl.checked){
+            rdIndex = 0;
+            renderRdUI();
+            setTimeout(step, 120);
+          } else {
+            stopAutoRead();
+          }
+        } else {
+          rdIndex++;
+          renderRdUI();
+          setTimeout(step, 120);
+        }
+      } else {
+        // 不自動換句：就停在此句（維持自動狀態），等待你手動下一句再按「自動朗讀」
+        stopAutoRead();
+      }
+    });
+  };
+
+  step();
+}
+
+function stopAutoRead(){
+  if(!rdAutoRunning) {
+    renderRdUI();
+    return;
+  }
+  rdAutoRunning = false;
+  rdAutoToken++;
+  window.speechSynthesis?.cancel?.();
+  renderRdUI();
+}
+
+/* ---------- UI 綁定 ---------- */
 rdBothBtn.onclick = ()=> setRdMode("both");
 rdGreetBtn.onclick = ()=> setRdMode("greet");
 rdWordBtn.onclick = ()=> setRdMode("word");
 
 rdPrevBtn.onclick = ()=>{
+  stopAutoRead();
   window.speechSynthesis?.cancel?.();
   rdPrev();
 };
 rdNextBtn2.onclick = ()=>{
+  stopAutoRead();
   window.speechSynthesis?.cancel?.();
   rdNext();
 };
 rdSpeakBtn.onclick = ()=>{
+  stopAutoRead(); // 手動朗讀時，不要讓自動繼續推進
   rdSpeakCurrent();
+};
+
+rdAutoStartBtn.onclick = ()=>{
+  startAutoRead();
+};
+rdAutoStopBtn.onclick = ()=>{
+  stopAutoRead();
 };
 
 rdRate.addEventListener("input", ()=>{
