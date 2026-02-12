@@ -21,7 +21,7 @@ body { margin: 0; }
 .group { min-width: 170px; }
 .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
 
-.seg { display: inline-flex; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
 .seg button { border: 0; background: white; padding: 8px 10px; cursor: pointer; }
 .seg .active { background: #111827; color: white; }
 
@@ -33,7 +33,7 @@ body { margin: 0; }
 .correct { background: #ecfdf5; border-color: #16a34a; }
 .wrong { background: #fef2f2; border-color: #dc2626; }
 
-.actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; align-items:center; }
+.actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
 .primary, .ghost, .playBtn, .danger {
   padding: 10px 12px; border-radius: 12px; cursor: pointer; font-weight: 700;
   border: 1px solid #e5e7eb; background: white;
@@ -62,7 +62,7 @@ textarea:focus { border-color: #111827; }
 .final { color: #111827; font-weight: 800; }
 .note { margin-top: 10px; padding: 10px 12px; border: 1px dashed #d1d5db; border-radius: 12px; background: #fff; }
 
-.sectionTitle { font-weight: 900; font-size: 18px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.sectionTitle { font-weight: 900; font-size: 18px; display:flex; gap:10px; align-items:center; }
 .sectionDesc { margin-top: 4px; color:#6b7280; font-size: 12px; line-height:1.5; }
 .hr { height:1px; background:#e5e7eb; margin: 10px 0; border:0; }
 
@@ -76,16 +76,6 @@ textarea:focus { border-color: #111827; }
 .quizSubSm { text-align:center; color:#6b7280; font-size: 13px; margin-bottom: 8px; }
 
 .kpi { font-size: 18px; font-weight: 900; }
-
-.rateWrap{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-input[type="range"]{ width: 180px; }
-
-.toggleRow{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.check{
-  display:flex; gap:8px; align-items:center;
-  padding: 6px 10px; border-radius: 999px; border:1px solid #e5e7eb; background:#fff;
-  font-size: 12px; color:#374151;
-}
 </style>
 </head>
 
@@ -176,68 +166,56 @@ input[type="range"]{ width: 180px; }
 
   </div>
 
-  <!-- 素材朗讀（手動 + 自動朗讀全部） -->
+  <!-- 素材朗讀（問候語 + 單字 + 形容詞） -->
   <div class="card" style="margin-top:12px;">
-    <div class="sectionTitle">🎧 素材朗讀（問候語＋單字） <span class="badge">手動＋自動</span></div>
+    <div class="sectionTitle">🔊 素材朗讀（問候語＋單字＋形容詞） <span class="badge">手動/自動</span></div>
     <div class="sectionDesc">
-      朗讀來源：<span class="kbd">guide_data.json</span> 裡的 <span class="kbd">banks.greetings</span> 與 <span class="kbd">banks.words</span>（只朗讀 ja）。
-      你可手動「上一句 / 朗讀 / 下一句」，也可「自動朗讀全部」。
+      你可以用「上一句/朗讀/下一句」手動聽，也可一鍵自動朗讀全部（可調語速）。朗讀內容來源：data.json。
     </div>
     <hr class="hr" />
 
     <div class="row">
       <div class="group">
-        <div class="label">範圍</div>
+        <div class="label">朗讀範圍</div>
         <div class="seg">
-          <button id="rdBothBtn" class="active">問候語＋單字</button>
-          <button id="rdGreetBtn">只問候語</button>
-          <button id="rdWordBtn">只單字</button>
+          <button id="readSetAllBtn" class="active">全部</button>
+          <button id="readSetGreetBtn">問候語</button>
+          <button id="readSetWordBtn">單字</button>
+          <button id="readSetAdjBtn">形容詞</button>
         </div>
-      </div>
-
-      <div class="group">
-        <div class="label">進度</div>
-        <div class="kpi" id="rdProg">0 / 0</div>
       </div>
 
       <div class="group">
         <div class="label">語速</div>
-        <div class="rateWrap">
-          <input id="rdRate" type="range" min="0.5" max="1.2" step="0.05" value="0.85" />
-          <span class="badge" id="rdRateVal">0.85x</span>
+        <div class="seg">
+          <button id="rateSlowBtn">慢</button>
+          <button id="rateNormalBtn" class="active">中</button>
+          <button id="rateFastBtn">快</button>
         </div>
-        <div class="small">建議：0.70–0.90 比較適合通勤/工作時慢聽</div>
+        <div class="small">建議：慢=0.75，中=0.9，快=1.05</div>
+      </div>
+
+      <div class="group">
+        <div class="label">目前</div>
+        <div id="readKpi" class="kpi">0 / 0</div>
       </div>
     </div>
 
-    <div class="actions">
-      <!-- 手動 -->
-      <button id="rdPrevBtn" class="ghost">⏮ 上一句</button>
-      <button id="rdSpeakBtn" class="primary">🔊 朗讀</button>
-      <button id="rdNextBtn2" class="ghost">下一句 ⏭</button>
+    <div style="margin-top:10px;">
+      <div id="readText" class="quizPromptSm">（載入中…）</div>
+      <div id="readSub" class="quizSubSm">（資料庫載入後可開始）</div>
 
-      <!-- 自動 -->
-      <button id="rdAutoStartBtn" class="playBtn">▶ 自動朗讀全部</button>
-      <button id="rdAutoStopBtn" class="danger" disabled>■ 停止自動朗讀</button>
+      <div class="actions">
+        <button id="readPrevBtn" class="ghost">⬅ 上一句</button>
+        <button id="readSpeakBtn" class="playBtn">🔊 朗讀</button>
+        <button id="readNextBtn" class="ghost">下一句 ➡</button>
 
-      <label class="check">
-        <input id="rdLoop" type="checkbox" />
-        循環播放
-      </label>
-      <label class="check">
-        <input id="rdAutoAdvance" type="checkbox" checked />
-        自動換句
-      </label>
+        <button id="readAutoBtn" class="primary">▶ 自動朗讀全部</button>
+        <button id="readStopAutoBtn" class="danger">■ 停止自動朗讀</button>
+      </div>
+
+      <div id="readHint" class="small"></div>
     </div>
-
-    <div class="note">
-      <div class="small">目前句子：</div>
-      <div id="rdNow" class="final">（空）</div>
-      <div class="small" id="rdNowMeta">（空）</div>
-      <div class="small" id="rdAutoState">自動朗讀：未啟動</div>
-    </div>
-
-    <div class="note small" id="dataStatus">題庫狀態：尚未載入 JSON</div>
   </div>
 
   <!-- 問候語小測驗 -->
@@ -287,11 +265,11 @@ input[type="range"]{ width: 180px; }
     </div>
   </div>
 
-  <!-- 單字小測驗（emoji 示意圖） -->
+  <!-- 單字小測驗 -->
   <div class="card" style="margin-top:12px;">
-    <div class="sectionTitle">🧩 單字小測驗（中⇄日） <span class="badge">emoji 示意圖</span></div>
+    <div class="sectionTitle">🧩 單字小測驗（中⇄日） <span class="badge">可擴充</span></div>
     <div class="sectionDesc">
-      單字題庫完全來自 JSON。若 JSON 尚未載入成功，此區塊會顯示提示並暫停出題。
+      遊戲玩法同上。單字庫來源：data.json。
     </div>
     <hr class="hr" />
 
@@ -319,11 +297,7 @@ input[type="range"]{ width: 180px; }
     </div>
 
     <div style="margin-top:10px;">
-      <div class="row" style="justify-content:center; align-items:center; gap:10px;">
-        <div id="wordIcon" style="font-size:44px; line-height:1;">🧩</div>
-        <div id="wordPrompt" class="quizPromptSm" style="margin:0;">（尚未載入）</div>
-      </div>
-
+      <div id="wordPrompt" class="quizPromptSm">蘋果</div>
       <div id="wordSub" class="quizSubSm">請選出正確對應</div>
       <div id="wordChoices" class="choices"></div>
 
@@ -334,6 +308,43 @@ input[type="range"]{ width: 180px; }
       </div>
 
       <div id="wordHint" class="hint"></div>
+    </div>
+  </div>
+
+  <!-- 新增：形容詞小測驗（判斷 い / な） -->
+  <div class="card" style="margin-top:12px;">
+    <div class="sectionTitle">🧩 形容詞小測驗（い形容詞 / な形容詞） <span class="badge">新增</span></div>
+    <div class="sectionDesc">
+      題目出現一個形容詞，請判斷它是「い形容詞」或「な形容詞」。答對會播放該日文。
+    </div>
+    <hr class="hr" />
+
+    <div class="row">
+      <div class="group">
+        <div class="label">分數</div>
+        <div id="adjScore" class="kpi">0 / 0</div>
+      </div>
+      <div class="group">
+        <div class="label">發音</div>
+        <div class="seg">
+          <button id="adjTTSOffBtn" class="active">不播放</button>
+          <button id="adjTTSOnBtn">播放日文</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;">
+      <div id="adjPrompt" class="quizPromptSm">（載入中…）</div>
+      <div id="adjSub" class="quizSubSm">請選：い形容詞 / な形容詞</div>
+      <div id="adjChoices" class="choices"></div>
+
+      <div class="actions">
+        <button id="adjPlayBtn" class="playBtn">🔊 播放</button>
+        <button id="adjNextBtn" class="primary">下一題</button>
+        <button id="adjResetBtn" class="ghost">重置分數</button>
+      </div>
+
+      <div id="adjHint" class="hint"></div>
     </div>
   </div>
 
@@ -348,30 +359,27 @@ function shuffle(a){ return a.sort(()=>Math.random()-0.5); }
 function uniqPush(arr, v){ if(!arr.includes(v)) arr.push(v); }
 
 /* ============================================================
-   TTS：唸日文（支援語速 + 允許 onend）
+   TTS：唸日文（假名/日文句子）
 ============================================================ */
-function speakJP(text, rate=0.9, onend=null){
+let GLOBAL_TTS_RATE = 0.9;
+
+function speakJP(text){
   if(!("speechSynthesis" in window)) {
     alert("此瀏覽器不支援 SpeechSynthesis。建議用 Chrome / Edge。");
-    return null;
+    return;
   }
   window.speechSynthesis.cancel();
 
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "ja-JP";
-  u.rate = rate;
+  u.rate = GLOBAL_TTS_RATE;
   u.pitch = 1.0;
 
   const voices = window.speechSynthesis.getVoices?.() || [];
   const jp = voices.find(v => (v.lang || "").toLowerCase().startsWith("ja"));
   if(jp) u.voice = jp;
 
-  if(typeof onend === "function"){
-    u.onend = onend;
-  }
-
   window.speechSynthesis.speak(u);
-  return u;
 }
 if("speechSynthesis" in window){
   window.speechSynthesis.onvoiceschanged = () => {};
@@ -402,20 +410,15 @@ let score = { c:0, t:0 };
 let revealed = false;
 
 function kanaLabel(item){ return script==="hira" ? item[0] : item[1]; }
+function updateScore(){ document.getElementById("scoreBox").textContent = `${score.c} / ${score.t}`; }
 
-function updateScore(){
-  document.getElementById("scoreBox").textContent = `${score.c} / ${score.t}`;
-}
-
-function renderChoices(arr){
+function renderChoices50(arr){
   const box=document.getElementById("choices");
   box.innerHTML="";
-
   arr.forEach(v=>{
     const b=document.createElement("button");
     b.className="choice";
     b.textContent=v;
-
     b.onclick=()=>{
       if(revealed) return;
       revealed=true;
@@ -427,12 +430,10 @@ function renderChoices(arr){
       }else{
         b.classList.add("wrong");
       }
-
       updateScore();
       document.getElementById("hint").textContent =
         `正解：${correct}（${current[0]} / ${current[1]} = ${current[2]}）`;
     };
-
     box.appendChild(b);
   });
 }
@@ -442,36 +443,32 @@ function newQuestion(){
   document.getElementById("hint").textContent = "";
 
   current = KANA[rand(KANA.length)];
-  const [h,k,r] = current;
-
   const promptEl = document.getElementById("prompt");
   const subEl = document.getElementById("subprompt");
 
   if(mode==="k2r"){
     promptEl.textContent = kanaLabel(current);
     subEl.textContent = "請選擇正確的 romaji 發音";
-    correct = r;
+    correct = current[2];
 
-    let opts=[r];
+    let opts=[correct];
     while(opts.length<4){
       const rr = KANA[rand(KANA.length)][2];
       uniqPush(opts, rr);
     }
-    renderChoices(shuffle(opts));
+    renderChoices50(shuffle(opts));
 
   } else if(mode==="r2k"){
-    promptEl.textContent = r;
+    promptEl.textContent = current[2];
     subEl.textContent = "請選擇正確的假名";
     correct = kanaLabel(current);
 
     let opts=[correct];
     while(opts.length<4){
-      const kk2 = script==="hira"
-        ? KANA[rand(KANA.length)][0]
-        : KANA[rand(KANA.length)][1];
+      const kk2 = script==="hira" ? KANA[rand(KANA.length)][0] : KANA[rand(KANA.length)][1];
       uniqPush(opts, kk2);
     }
-    renderChoices(shuffle(opts));
+    renderChoices50(shuffle(opts));
 
   } else { // l2k
     promptEl.textContent = "🔊";
@@ -480,13 +477,11 @@ function newQuestion(){
 
     let opts=[correct];
     while(opts.length<4){
-      const kk2 = script==="hira"
-        ? KANA[rand(KANA.length)][0]
-        : KANA[rand(KANA.length)][1];
+      const kk2 = script==="hira" ? KANA[rand(KANA.length)][0] : KANA[rand(KANA.length)][1];
       uniqPush(opts, kk2);
     }
-    renderChoices(shuffle(opts));
-    setTimeout(()=> speakJP(kanaLabel(current), 0.9), 120);
+    renderChoices50(shuffle(opts));
+    setTimeout(()=> speakJP(kanaLabel(current)), 120);
   }
 }
 
@@ -497,50 +492,15 @@ const k2rBtn  = document.getElementById("k2rBtn");
 const r2kBtn  = document.getElementById("r2kBtn");
 const l2kBtn  = document.getElementById("l2kBtn");
 
-hiraBtn.onclick=()=>{
-  script="hira";
-  hiraBtn.classList.add("active");
-  kataBtn.classList.remove("active");
-  newQuestion();
-};
-kataBtn.onclick=()=>{
-  script="kata";
-  kataBtn.classList.add("active");
-  hiraBtn.classList.remove("active");
-  newQuestion();
-};
-k2rBtn.onclick=()=>{
-  mode="k2r";
-  k2rBtn.classList.add("active");
-  r2kBtn.classList.remove("active");
-  l2kBtn.classList.remove("active");
-  newQuestion();
-};
-r2kBtn.onclick=()=>{
-  mode="r2k";
-  r2kBtn.classList.add("active");
-  k2rBtn.classList.remove("active");
-  l2kBtn.classList.remove("active");
-  newQuestion();
-};
-l2kBtn.onclick=()=>{
-  mode="l2k";
-  l2kBtn.classList.add("active");
-  k2rBtn.classList.remove("active");
-  r2kBtn.classList.remove("active");
-  newQuestion();
-};
+hiraBtn.onclick=()=>{ script="hira"; hiraBtn.classList.add("active"); kataBtn.classList.remove("active"); newQuestion(); };
+kataBtn.onclick=()=>{ script="kata"; kataBtn.classList.add("active"); hiraBtn.classList.remove("active"); newQuestion(); };
+k2rBtn.onclick=()=>{ mode="k2r"; k2rBtn.classList.add("active"); r2kBtn.classList.remove("active"); l2kBtn.classList.remove("active"); newQuestion(); };
+r2kBtn.onclick=()=>{ mode="r2k"; r2kBtn.classList.add("active"); k2rBtn.classList.remove("active"); l2kBtn.classList.remove("active"); newQuestion(); };
+l2kBtn.onclick=()=>{ mode="l2k"; l2kBtn.classList.add("active"); k2rBtn.classList.remove("active"); r2kBtn.classList.remove("active"); newQuestion(); };
 
 document.getElementById("nextBtn").onclick=()=>newQuestion();
-document.getElementById("resetBtn").onclick=()=>{
-  score={c:0,t:0};
-  updateScore();
-  newQuestion();
-};
-document.getElementById("playBtn").onclick=()=>{
-  if(!current) return;
-  speakJP(kanaLabel(current), 0.9);
-};
+document.getElementById("resetBtn").onclick=()=>{ score={c:0,t:0}; updateScore(); newQuestion(); };
+document.getElementById("playBtn").onclick=()=>{ if(!current) return; speakJP(kanaLabel(current)); };
 
 /* ============================================================
    語音辨識（SpeechRecognition）
@@ -559,9 +519,7 @@ const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecogni
 let recog = null;
 let recognizing = false;
 
-function setSRStatus(text){
-  srStatus.textContent = `狀態：${text}`;
-}
+function setSRStatus(text){ srStatus.textContent = `狀態：${text}`; }
 
 function ensureRecognition(){
   if(!SpeechRecognition){
@@ -590,9 +548,7 @@ function ensureRecognition(){
     srStopBtn.disabled = true;
   };
 
-  recog.onerror = (e) => {
-    setSRStatus("錯誤：" + (e.error || "unknown"));
-  };
+  recog.onerror = (e) => { setSRStatus("錯誤：" + (e.error || "unknown")); };
 
   recog.onresult = (event) => {
     let interim = "";
@@ -616,50 +572,25 @@ function ensureRecognition(){
   return recog;
 }
 
-srStartBtn.onclick = () => {
-  const r = ensureRecognition();
-  if(!r) return;
-  try { r.start(); } catch(_) {}
-};
-
-srStopBtn.onclick = () => {
-  if(recog && recognizing){
-    recog.stop();
-  }
-};
-
-srClearBtn.onclick = () => {
-  srLiveEl.textContent = "（空）";
-  srFinalEl.textContent = "（空）";
-  srText.value = "";
-};
-
+srStartBtn.onclick = () => { const r = ensureRecognition(); if(!r) return; try { r.start(); } catch(_) {} };
+srStopBtn.onclick = () => { if(recog && recognizing){ recog.stop(); } };
+srClearBtn.onclick = () => { srLiveEl.textContent = "（空）"; srFinalEl.textContent = "（空）"; srText.value = ""; };
 srSpeakBtn.onclick = () => {
   const t = (srText.value || "").trim();
-  if(!t){
-    alert("目前沒有辨識結果可播放。");
-    return;
-  }
-  speakJP(t, 0.9);
+  if(!t){ alert("目前沒有辨識結果可播放。"); return; }
+  speakJP(t);
 };
-
 srText.addEventListener("input", () => {
   const t = srText.value.trim();
   srFinalEl.textContent = t ? t : "（空）";
 });
 
 /* ============================================================
-   小測驗（可重用）— 原本功能保留
+   新增：中⇄日 小測驗遊戲（可重用）
+   - bank: [{ zh, ja }]
 ============================================================ */
 function createBilingualQuiz(opts){
-  const {
-    bank,
-    ids,
-    btns,
-    defaultDirection,
-    titleForHint,
-    iconElId
-  } = opts;
+  const { bank, ids, btns, defaultDirection, titleForHint } = opts;
 
   let direction = defaultDirection || "C2J";
   let ttsEnabled = false;
@@ -668,24 +599,11 @@ function createBilingualQuiz(opts){
   let revealed = false;
   let score = { c:0, t:0 };
 
-  function setScore(){
-    document.getElementById(ids.score).textContent = `${score.c} / ${score.t}`;
-  }
+  function setScore(){ document.getElementById(ids.score).textContent = `${score.c} / ${score.t}`; }
   function setHint(text){ document.getElementById(ids.hint).textContent = text || ""; }
 
-  function setIcon(item){
-    if(!iconElId) return;
-    const el = document.getElementById(iconElId);
-    if(!el) return;
-    el.textContent = item?.icon ? String(item.icon) : "🧩";
-  }
-
-  function getPromptText(item){
-    return direction === "C2J" ? item.zh : item.ja;
-  }
-  function getCorrectText(item){
-    return direction === "C2J" ? item.ja : item.zh;
-  }
+  function getPromptText(item){ return direction === "C2J" ? item.zh : item.ja; }
+  function getCorrectText(item){ return direction === "C2J" ? item.ja : item.zh; }
 
   function pickWrongChoices(item, n){
     const pool = bank.filter(x => x !== item);
@@ -719,43 +637,25 @@ function createBilingualQuiz(opts){
         setScore();
 
         setHint(`正解：${correct}（${titleForHint}：${q.zh} ⇄ ${q.ja}）`);
-
-        if(ttsEnabled){
-          speakJP(q.ja, 0.9);
-        }
+        if(ttsEnabled){ speakJP(q.ja); }
       };
-
       box.appendChild(b);
     });
   }
 
   function newQ(){
-    if(!bank.length){
-      setHint("題庫尚未載入（請確認 guide_data.json 是否存在於同一路徑）");
-      document.getElementById(ids.prompt).textContent = "（尚未載入）";
-      document.getElementById(ids.sub).textContent = "請先載入題庫";
-      document.getElementById(ids.choices).innerHTML = "";
-      setIcon({ icon: "🧩" });
-      q = null;
-      correct = null;
-      revealed = true;
-      return;
-    }
-
     revealed = false;
     setHint("");
 
     q = bank[rand(bank.length)];
-    setIcon(q);
-
     document.getElementById(ids.prompt).textContent = getPromptText(q);
     document.getElementById(ids.sub).textContent = "請選出正確對應";
 
     correct = getCorrectText(q);
-
     const wrong = pickWrongChoices(q, 3);
-    const choices = shuffle([correct, ...wrong]);
-    renderChoices(choices);
+    renderChoices(shuffle([correct, ...wrong]));
+
+    if(ttsEnabled){ setTimeout(()=> speakJP(q.ja), 120); }
   }
 
   document.getElementById(btns.dirA).onclick = () => {
@@ -780,325 +680,276 @@ function createBilingualQuiz(opts){
     ttsEnabled = true;
     document.getElementById(btns.ttsOn).classList.add("active");
     document.getElementById(btns.ttsOff).classList.remove("active");
-    if(q) speakJP(q.ja, 0.9);
+    if(q) speakJP(q.ja);
   };
 
-  document.getElementById(btns.play).onclick = () => {
-    if(!q){
-      alert("題庫尚未載入，暫時無法播放。");
-      return;
-    }
-    speakJP(q.ja, 0.9);
-  };
+  document.getElementById(btns.play).onclick = () => { if(!q) return; speakJP(q.ja); };
   document.getElementById(btns.next).onclick = () => newQ();
-  document.getElementById(btns.reset).onclick = () => {
-    score = { c:0, t:0 };
-    setScore();
-    newQ();
+  document.getElementById(btns.reset).onclick = () => { score = { c:0, t:0 }; setScore(); newQ(); };
+
+  if(defaultDirection === "J2C"){
+    direction = "J2C";
+    document.getElementById(btns.dirB).classList.add("active");
+    document.getElementById(btns.dirA).classList.remove("active");
+  }
+  setScore();
+  newQ();
+
+  return { getState: () => ({ direction, ttsEnabled, score }) };
+}
+
+/* ============================================================
+   新增：形容詞判斷測驗（い/な）
+============================================================ */
+function createAdjTypeQuiz(opts){
+  const { bankI, bankNa, ids, btns } = opts;
+
+  let ttsEnabled = false;
+  let score = { c:0, t:0 };
+  let q = null; // { ja, type }
+
+  function setScore(){ document.getElementById(ids.score).textContent = `${score.c} / ${score.t}`; }
+  function setHint(t){ document.getElementById(ids.hint).textContent = t || ""; }
+
+  function newQ(){
+    setHint("");
+    const pickType = Math.random() < 0.5 ? "i" : "na";
+    const source = pickType === "i" ? bankI : bankNa;
+    q = { ja: source[rand(source.length)].ja, type: pickType };
+
+    document.getElementById(ids.prompt).textContent = q.ja;
+    document.getElementById(ids.sub).textContent = "請選：い形容詞 / な形容詞";
+
+    const box = document.getElementById(ids.choices);
+    box.innerHTML = "";
+
+    const choices = [
+      { label: "い形容詞", val: "i" },
+      { label: "な形容詞", val: "na" }
+    ];
+
+    choices.forEach(ch => {
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.textContent = ch.label;
+
+      b.onclick = () => {
+        score.t++;
+        const ok = (ch.val === q.type);
+        if(ok){
+          score.c++;
+          b.classList.add("correct");
+        } else {
+          b.classList.add("wrong");
+        }
+        setScore();
+        setHint(`正解：${q.type === "i" ? "い形容詞" : "な形容詞"}（${q.ja}）`);
+        if(ttsEnabled) speakJP(q.ja);
+      };
+
+      box.appendChild(b);
+    });
+
+    if(ttsEnabled) setTimeout(()=> speakJP(q.ja), 120);
+  }
+
+  document.getElementById(btns.ttsOff).onclick = () => {
+    ttsEnabled = false;
+    document.getElementById(btns.ttsOff).classList.add("active");
+    document.getElementById(btns.ttsOn).classList.remove("active");
   };
+  document.getElementById(btns.ttsOn).onclick = () => {
+    ttsEnabled = true;
+    document.getElementById(btns.ttsOn).classList.add("active");
+    document.getElementById(btns.ttsOff).classList.remove("active");
+    if(q) speakJP(q.ja);
+  };
+
+  document.getElementById(btns.play).onclick = () => { if(!q) return; speakJP(q.ja); };
+  document.getElementById(btns.next).onclick = () => newQ();
+  document.getElementById(btns.reset).onclick = () => { score = { c:0, t:0 }; setScore(); newQ(); };
 
   setScore();
   newQ();
 
-  return {
-    setBank: (arr) => {
-      bank.length = 0;
-      arr.forEach(x=>bank.push(x));
-      score = { c:0, t:0 };
-      setScore();
-      newQ();
-    },
-    getBank: () => bank
-  };
+  return { getState: () => ({ ttsEnabled, score }) };
 }
 
 /* ============================================================
-   題庫（問候語 fallback；單字不內建）
+   朗讀：手動 + 自動朗讀全部（問候語/單字/形容詞）
 ============================================================ */
-let GREETING_BANK = [
-  { zh: "你好", ja: "こんにちは" },
-  { zh: "早安", ja: "おはようございます" },
-  { zh: "晚上好", ja: "こんばんは" },
-  { zh: "晚安", ja: "おやすみなさい" },
-  { zh: "再見", ja: "さようなら" },
-  { zh: "短暫告別", ja: "じゃあね" },
-  { zh: "謝謝", ja: "ありがとうございます" },
-  { zh: "不客氣", ja: "どういたしまして" },
-  { zh: "對不起", ja: "すみません" },
-  { zh: "請多指教", ja: "よろしくお願いします" },
-  { zh: "麻煩您", ja: "お願いします" },
-  { zh: "好久不見", ja: "お久しぶりです" },
-  { zh: "你好嗎", ja: "お元気ですか" },
-  { zh: "恭喜您", ja: "おめでとうございます" },
-  { zh: "請保重", ja: "お大事に" },
-  { zh: "辛苦了", ja: "お疲れ様です" },
-  { zh: "我開動了", ja: "いただきます" },
-  { zh: "我吃飽了", ja: "ごちそうさまでした" },
-  { zh: "我出門了", ja: "行ってきます" },
-  { zh: "慢走", ja: "行ってらっしゃい" },
-  { zh: "我回來了", ja: "ただいま" },
-  { zh: "初次見面", ja: "はじめまして" },
-  { zh: "請等一下", ja: "ちょっと待ってください" }
-];
+let DB = null;
+let readSet = "all"; // all | greetings | words | adjectives
+let readList = [];  // array of strings (ja)
+let readIdx = 0;
+let autoTimer = null;
+let autoRunning = false;
 
-let WORD_BANK = [];
+function buildReadList(){
+  if(!DB) return [];
 
-const greetingQuiz = createBilingualQuiz({
-  bank: GREETING_BANK,
-  ids: { prompt:"greetPrompt", sub:"greetSub", choices:"greetChoices", score:"greetScore", hint:"greetHint" },
-  btns: { dirA:"greetC2JBtn", dirB:"greetJ2CBtn", ttsOff:"greetTTSOffBtn", ttsOn:"greetTTSOnBtn", play:"greetPlayBtn", next:"greetNextBtn", reset:"greetResetBtn" },
-  defaultDirection: "C2J",
-  titleForHint: "對應"
-});
+  const g = (DB.banks?.greetings || []).map(x => x.ja).filter(Boolean);
+  const w = (DB.banks?.words || []).map(x => x.ja).filter(Boolean);
 
-const wordQuiz = createBilingualQuiz({
-  bank: WORD_BANK,
-  ids: { prompt:"wordPrompt", sub:"wordSub", choices:"wordChoices", score:"wordScore", hint:"wordHint" },
-  btns: { dirA:"wordC2JBtn", dirB:"wordJ2CBtn", ttsOff:"wordTTSOffBtn", ttsOn:"wordTTSOnBtn", play:"wordPlayBtn", next:"wordNextBtn", reset:"wordResetBtn" },
-  defaultDirection: "C2J",
-  titleForHint: "對應",
-  iconElId: "wordIcon"
-});
+  const ai = (DB.banks?.adjectives?.i || []).map(x => x.ja).filter(Boolean);
+  const an = (DB.banks?.adjectives?.na || []).map(x => x.ja).filter(Boolean);
+  const adj = [...ai, ...an];
 
-/* ============================================================
-   JSON 載入
-============================================================ */
-const dataStatusEl = document.getElementById("dataStatus");
+  if(readSet === "greetings") return g;
+  if(readSet === "words") return w;
+  if(readSet === "adjectives") return adj;
+  return [...g, ...w, ...adj];
+}
 
-async function loadGuideData(){
-  try{
-    const res = await fetch("./guide_data.json", { cache:"no-store" });
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
+function renderRead(){
+  readList = buildReadList();
+  if(readIdx < 0) readIdx = 0;
+  if(readIdx >= readList.length) readIdx = Math.max(0, readList.length - 1);
 
-    const g = (data?.banks?.greetings || [])
-      .filter(x => x && x.zh && x.ja)
-      .map(x => ({ zh:String(x.zh), ja:String(x.ja) }));
+  const txt = readList.length ? readList[readIdx] : "（沒有資料）";
+  document.getElementById("readText").textContent = txt;
+  document.getElementById("readSub").textContent = `範圍：${readSet}｜索引：${readIdx + 1} / ${readList.length}`;
+  document.getElementById("readKpi").textContent = `${readIdx + 1} / ${readList.length}`;
 
-    const w = (data?.banks?.words || [])
-      .filter(x => x && x.zh && x.ja)
-      .map(x => ({
-        zh: String(x.zh),
-        ja: String(x.ja),
-        icon: x.icon ? String(x.icon) : "🧩"
-      }));
+  document.getElementById("readHint").textContent =
+    autoRunning ? "自動朗讀中…（可按停止）" : "手動模式：上一句 / 朗讀 / 下一句";
+}
 
-    if(g.length){
-      GREETING_BANK = g;
-      greetingQuiz.setBank(g);
+function stopAuto(){
+  autoRunning = false;
+  if(autoTimer){ clearTimeout(autoTimer); autoTimer = null; }
+  window.speechSynthesis?.cancel?.();
+  renderRead();
+}
+
+function autoStep(){
+  if(!autoRunning) return;
+  if(readList.length === 0){ stopAuto(); return; }
+
+  const t = readList[readIdx];
+  speakJP(t);
+
+  // 粗略估計：字數 * 160ms + 基礎 800ms，再依語速調整
+  const est = Math.max(900, 800 + (t.length * 160));
+  const rateFactor = (GLOBAL_TTS_RATE || 0.9);
+  const wait = Math.round(est / rateFactor);
+
+  autoTimer = setTimeout(() => {
+    if(!autoRunning) return;
+    readIdx++;
+    if(readIdx >= readList.length){
+      stopAuto();
+      return;
     }
+    renderRead();
+    autoStep();
+  }, wait);
+}
 
-    WORD_BANK = w;
-    wordQuiz.setBank(w);
-
-    dataStatusEl.textContent = `題庫狀態：JSON 已載入 ✅（問候語 ${GREETING_BANK.length} 筆 / 單字 ${WORD_BANK.length} 筆）`;
-
-    rebuildQueue();
-    renderRdUI();
-
-  } catch(e){
-    console.warn("guide_data.json 載入失敗", e);
-    dataStatusEl.textContent = "題庫狀態：JSON 載入失敗 ❌（請確認 guide_data.json 是否與 index.html 同一路徑）";
-    rebuildQueue();
-    renderRdUI();
+/* ============================================================
+   載入 data.json 並啟動（問候語/單字/形容詞）
+============================================================ */
+async function loadDB(){
+  try{
+    const res = await fetch("data.json", { cache: "no-store" });
+    if(!res.ok) throw new Error("Fetch failed: " + res.status);
+    DB = await res.json();
+  }catch(e){
+    alert("data.json 載入失敗：\n" + e.message + "\n\n請確認 index.html 與 data.json 放在同一層，且檔名正確。");
+    DB = { banks: { greetings: [], words: [], adjectives: { i:[], na:[] } } };
   }
 }
 
 /* ============================================================
-   素材朗讀播放器（手動 + 自動朗讀全部）
+   主程式 init
 ============================================================ */
-let rdMode = "both"; // both | greet | word
-let rdQueue = [];    // [{type, zh, ja, icon?}]
-let rdIndex = 0;
+(async function init(){
+  updateScore();
+  newQuestion();
+  setSRStatus(SpeechRecognition ? "未啟動" : "不支援");
 
-const rdProgEl   = document.getElementById("rdProg");
-const rdNowEl    = document.getElementById("rdNow");
-const rdNowMeta  = document.getElementById("rdNowMeta");
+  // Load DB
+  await loadDB();
 
-const rdBothBtn  = document.getElementById("rdBothBtn");
-const rdGreetBtn = document.getElementById("rdGreetBtn");
-const rdWordBtn  = document.getElementById("rdWordBtn");
+  // 建立測驗 bank
+  const GREETING_BANK = (DB.banks?.greetings || []).map(x => ({ zh: x.zh, ja: x.ja })).filter(x => x.zh && x.ja);
+  const WORD_BANK = (DB.banks?.words || []).map(x => ({ zh: x.zh, ja: x.ja })).filter(x => x.zh && x.ja);
 
-const rdPrevBtn  = document.getElementById("rdPrevBtn");
-const rdSpeakBtn = document.getElementById("rdSpeakBtn");
-const rdNextBtn2 = document.getElementById("rdNextBtn2");
+  // 問候語/單字測驗（原本功能保留）
+  createBilingualQuiz({
+    bank: GREETING_BANK,
+    ids: { prompt: "greetPrompt", sub: "greetSub", choices: "greetChoices", score: "greetScore", hint: "greetHint" },
+    btns: { dirA: "greetC2JBtn", dirB: "greetJ2CBtn", ttsOff: "greetTTSOffBtn", ttsOn: "greetTTSOnBtn", play: "greetPlayBtn", next: "greetNextBtn", reset: "greetResetBtn" },
+    defaultDirection: "C2J",
+    titleForHint: "對應"
+  });
 
-const rdRate     = document.getElementById("rdRate");
-const rdRateVal  = document.getElementById("rdRateVal");
+  createBilingualQuiz({
+    bank: WORD_BANK,
+    ids: { prompt: "wordPrompt", sub: "wordSub", choices: "wordChoices", score: "wordScore", hint: "wordHint" },
+    btns: { dirA: "wordC2JBtn", dirB: "wordJ2CBtn", ttsOff: "wordTTSOffBtn", ttsOn: "wordTTSOnBtn", play: "wordPlayBtn", next: "wordNextBtn", reset: "wordResetBtn" },
+    defaultDirection: "C2J",
+    titleForHint: "對應"
+  });
 
-// 自動朗讀 UI
-const rdAutoStartBtn = document.getElementById("rdAutoStartBtn");
-const rdAutoStopBtn  = document.getElementById("rdAutoStopBtn");
-const rdLoopEl        = document.getElementById("rdLoop");
-const rdAutoAdvanceEl = document.getElementById("rdAutoAdvance");
-const rdAutoStateEl   = document.getElementById("rdAutoState");
+  // 形容詞測驗（新增）
+  const ADJ_I = (DB.banks?.adjectives?.i || []).map(x => ({ ja: x.ja })).filter(x => x.ja);
+  const ADJ_NA = (DB.banks?.adjectives?.na || []).map(x => ({ ja: x.ja })).filter(x => x.ja);
 
-let rdSpeakRate = parseFloat(rdRate.value) || 0.85;
+  createAdjTypeQuiz({
+    bankI: ADJ_I,
+    bankNa: ADJ_NA,
+    ids: { prompt: "adjPrompt", sub: "adjSub", choices: "adjChoices", score: "adjScore", hint: "adjHint" },
+    btns: { ttsOff: "adjTTSOffBtn", ttsOn: "adjTTSOnBtn", play: "adjPlayBtn", next: "adjNextBtn", reset: "adjResetBtn" }
+  });
 
-// 自動朗讀狀態
-let rdAutoRunning = false;
-let rdAutoToken = 0; // 用來避免 onend callback 競態
+  // 朗讀：事件綁定
+  const setAllBtn = document.getElementById("readSetAllBtn");
+  const setGBtn = document.getElementById("readSetGreetBtn");
+  const setWBtn = document.getElementById("readSetWordBtn");
+  const setABtn = document.getElementById("readSetAdjBtn");
 
-function setRdMode(mode){
-  stopAutoRead(); // 切換模式時，先停止自動朗讀（避免跑錯 queue）
-  rdMode = mode;
-  rdBothBtn.classList.toggle("active", mode==="both");
-  rdGreetBtn.classList.toggle("active", mode==="greet");
-  rdWordBtn.classList.toggle("active", mode==="word");
-  rebuildQueue();
-  rdIndex = 0;
-  renderRdUI();
-}
+  function activateSet(btn){
+    [setAllBtn,setGBtn,setWBtn,setABtn].forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+  }
 
-function rebuildQueue(){
-  const g = GREETING_BANK.map(x => ({ type:"greeting", zh:x.zh, ja:x.ja }));
-  const w = WORD_BANK.map(x => ({ type:"word", zh:x.zh, ja:x.ja, icon:x.icon || "" }));
+  setAllBtn.onclick = ()=>{ stopAuto(); readSet="all"; activateSet(setAllBtn); readIdx=0; renderRead(); };
+  setGBtn.onclick   = ()=>{ stopAuto(); readSet="greetings"; activateSet(setGBtn); readIdx=0; renderRead(); };
+  setWBtn.onclick   = ()=>{ stopAuto(); readSet="words"; activateSet(setWBtn); readIdx=0; renderRead(); };
+  setABtn.onclick   = ()=>{ stopAuto(); readSet="adjectives"; activateSet(setABtn); readIdx=0; renderRead(); };
 
-  if(rdMode === "greet") rdQueue = g;
-  else if(rdMode === "word") rdQueue = w;
-  else rdQueue = [...g, ...w];
-}
+  document.getElementById("readPrevBtn").onclick = ()=>{ stopAuto(); readIdx=Math.max(0, readIdx-1); renderRead(); };
+  document.getElementById("readNextBtn").onclick = ()=>{ stopAuto(); readIdx=Math.min(buildReadList().length-1, readIdx+1); renderRead(); };
+  document.getElementById("readSpeakBtn").onclick = ()=>{ const list=buildReadList(); if(!list.length) return; speakJP(list[readIdx]); };
 
-function renderRdUI(){
-  rdProgEl.textContent = `${rdQueue.length ? (rdIndex+1) : 0} / ${rdQueue.length}`;
-
-  const cur = rdQueue[rdIndex];
-  rdNowEl.textContent = cur ? cur.ja : "（空）";
-  rdNowMeta.textContent = cur ? `${cur.type==="greeting" ? "問候語" : "單字"}：${cur.zh}` : "（空）";
-
-  const disabled = rdQueue.length === 0;
-
-  rdPrevBtn.disabled = disabled;
-  rdSpeakBtn.disabled = disabled;
-  rdNextBtn2.disabled = disabled;
-
-  rdRate.disabled = disabled;
-
-  // 自動朗讀按鈕
-  rdAutoStartBtn.disabled = disabled || rdAutoRunning;
-  rdAutoStopBtn.disabled  = disabled || !rdAutoRunning;
-
-  rdAutoStateEl.textContent = `自動朗讀：${rdAutoRunning ? "進行中…" : "未啟動"}`;
-}
-
-function rdSpeakCurrent(onend=null){
-  if(!rdQueue.length) return;
-  const cur = rdQueue[rdIndex];
-  if(!cur) return;
-  speakJP(cur.ja, rdSpeakRate, onend);
-}
-
-function rdPrev(){
-  if(!rdQueue.length) return;
-  rdIndex = (rdIndex - 1 + rdQueue.length) % rdQueue.length;
-  renderRdUI();
-}
-
-function rdNext(){
-  if(!rdQueue.length) return;
-  rdIndex = (rdIndex + 1) % rdQueue.length;
-  renderRdUI();
-}
-
-/* ---------- 自動朗讀全部：加回來 ---------- */
-function startAutoRead(){
-  if(!rdQueue.length) return;
-  if(rdAutoRunning) return;
-
-  rdAutoRunning = true;
-  rdAutoToken++;
-  const myToken = rdAutoToken;
-
-  // 規則：自動朗讀從「目前句」開始一路唸到最後
-  renderRdUI();
-
-  const step = () => {
-    if(!rdAutoRunning) return;
-    if(myToken !== rdAutoToken) return;
-
-    rdSpeakCurrent(() => {
-      if(!rdAutoRunning) return;
-      if(myToken !== rdAutoToken) return;
-
-      const autoAdvance = rdAutoAdvanceEl.checked;
-      if(autoAdvance){
-        const atLast = (rdIndex >= rdQueue.length - 1);
-        if(atLast){
-          if(rdLoopEl.checked){
-            rdIndex = 0;
-            renderRdUI();
-            setTimeout(step, 120);
-          } else {
-            stopAutoRead();
-          }
-        } else {
-          rdIndex++;
-          renderRdUI();
-          setTimeout(step, 120);
-        }
-      } else {
-        // 不自動換句：就停在此句（維持自動狀態），等待你手動下一句再按「自動朗讀」
-        stopAutoRead();
-      }
-    });
+  document.getElementById("readAutoBtn").onclick = ()=>{
+    stopAuto();
+    readList = buildReadList();
+    if(!readList.length) return;
+    autoRunning = true;
+    renderRead();
+    autoStep();
   };
+  document.getElementById("readStopAutoBtn").onclick = ()=> stopAuto();
 
-  step();
-}
+  // 語速控制
+  const rateSlow = document.getElementById("rateSlowBtn");
+  const rateNormal = document.getElementById("rateNormalBtn");
+  const rateFast = document.getElementById("rateFastBtn");
 
-function stopAutoRead(){
-  if(!rdAutoRunning) {
-    renderRdUI();
-    return;
+  function setRate(val, btn){
+    GLOBAL_TTS_RATE = val;
+    [rateSlow, rateNormal, rateFast].forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
   }
-  rdAutoRunning = false;
-  rdAutoToken++;
-  window.speechSynthesis?.cancel?.();
-  renderRdUI();
-}
+  rateSlow.onclick = ()=> setRate(0.75, rateSlow);
+  rateNormal.onclick = ()=> setRate(0.9, rateNormal);
+  rateFast.onclick = ()=> setRate(1.05, rateFast);
 
-/* ---------- UI 綁定 ---------- */
-rdBothBtn.onclick = ()=> setRdMode("both");
-rdGreetBtn.onclick = ()=> setRdMode("greet");
-rdWordBtn.onclick = ()=> setRdMode("word");
-
-rdPrevBtn.onclick = ()=>{
-  stopAutoRead();
-  window.speechSynthesis?.cancel?.();
-  rdPrev();
-};
-rdNextBtn2.onclick = ()=>{
-  stopAutoRead();
-  window.speechSynthesis?.cancel?.();
-  rdNext();
-};
-rdSpeakBtn.onclick = ()=>{
-  stopAutoRead(); // 手動朗讀時，不要讓自動繼續推進
-  rdSpeakCurrent();
-};
-
-rdAutoStartBtn.onclick = ()=>{
-  startAutoRead();
-};
-rdAutoStopBtn.onclick = ()=>{
-  stopAutoRead();
-};
-
-rdRate.addEventListener("input", ()=>{
-  rdSpeakRate = parseFloat(rdRate.value) || 0.85;
-  rdRateVal.textContent = rdSpeakRate.toFixed(2) + "x";
-});
-
-/* ============================================================
-   初始化
-============================================================ */
-updateScore();
-newQuestion();
-setSRStatus(SpeechRecognition ? "未啟動" : "不支援");
-
-rebuildQueue();
-renderRdUI();
-loadGuideData();
+  // 初始朗讀呈現
+  renderRead();
+})();
 </script>
 </body>
 </html>
