@@ -851,7 +851,7 @@ function autoStep(){
 ============================================================ */
 async function loadDB(){
   try{
-    const res = await fetch("data.json", { cache: "no-store" });
+    const res = await fetch("guide_data.json", { cache: "no-store" });
     if(!res.ok) throw new Error("Fetch failed: " + res.status);
     DB = await res.json();
   }catch(e){
